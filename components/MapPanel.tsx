@@ -46,7 +46,7 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
     if (!map) return;
 
     // Clear existing markers from the map and the reference object
-    Object.values(markersRef.current).forEach(marker => marker.remove());
+    Object.values(markersRef.current).forEach(marker => map.removeLayer(marker));
     markersRef.current = {};
 
     // Add new markers for each event
