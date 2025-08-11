@@ -57,8 +57,8 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
           onSelectEvent(event);
         });
       
-      // Add a tooltip that shows the event name on hover
-      marker.bindTooltip(event.name);
+      // Add a tooltip that shows the event title on hover
+      marker.bindTooltip(event.title);
       
       markersRef.current[event.id] = marker;
     });

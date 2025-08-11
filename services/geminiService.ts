@@ -2,7 +2,11 @@
 import { GoogleGenAI } from "@google/genai";
 import { EventInfo, Source } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  throw new Error("Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your environment.");
+}
+const ai = new GoogleGenAI(apiKey);
 
 const cleanJsonString = (str: string): string => {
   // Remove markdown backticks and "json" label
@@ -37,7 +41,7 @@ export const fetchIwateEvents = async (): Promise<{ events: EventInfo[], sources
 今後数ヶ月以内に開催されるイベントも対象に含めてください。
 
 各イベントについて、以下の情報を必ず含めてください。
-- name: イベント名
+- title: イベント名
 - description: イベントの概要（3〜4文程度で具体的に）
 - date: 開催日（YYYY-MM-DD形式、または開催期間）
 - locationName: 開催場所の名称
