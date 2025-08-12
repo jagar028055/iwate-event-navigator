@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="岩手イベント" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    
+    <!-- Windows PWA Support -->
+    <meta name="msapplication-TileImage" content="/icons/icon-144.png" />
+    <meta name="msapplication-TileColor" content="#0d9488" />
+    
+    <!-- Meta tags for SEO and social -->
+    <meta name="description" content="岩手県内のイベント情報を地図で検索・発見。AI技術を活用したパーソナライズ推薦で、あなたにぴったりのイベントが見つかります。" />
+    <meta name="keywords" content="岩手,イベント,祭り,観光,地図,AI推薦" />
+    <meta name="author" content="岩手イベントナビゲーター" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="岩手イベントナビゲーター" />
+    <meta property="og:description" content="岩手県内のイベント情報を地図で検索・発見" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icons/icon-512.png" />
+    <meta property="og:locale" content="ja_JP" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="岩手イベントナビゲーター" />
+    <meta name="twitter:description" content="岩手県内のイベント情報を地図で検索・発見" />
+    <meta name="twitter:image" content="/icons/icon-512.png" />
+    
+    <!-- Theme color -->
+    <meta name="theme-color" content="#0d9488" />
+    
+    <title>岩手イベントナビゲーター</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+    
+    <style>
+      /* Custom scrollbars */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+      
+      /* Skip link for accessibility */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 16px;
+        background: #0d9488;
+        color: white;
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 4px;
+        z-index: 100;
+        transition: top 0.3s ease;
+      }
+      .skip-link:focus {
+        top: 16px;
+      }
+    </style>
+    
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.12.0",
+    "react/": "https://esm.sh/react@^19.1.1/",
+    "react": "https://esm.sh/react@^19.1.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "leaflet": "https://esm.sh/leaflet@1.9.4"
+  }
+}
+</script>
+</head>
+  <body>
+    <!-- Skip link for accessibility -->
+    <a href="#main-content" class="skip-link">メインコンテンツへスキップ</a>
+    
+    <!-- Fallback for users with JavaScript disabled -->
+    <noscript>
+      <div style="padding: 20px; text-align: center; background: #fee2e2; color: #991b1b;">
+        <h1>JavaScript が無効になっています</h1>
+        <p>このアプリケーションを使用するには JavaScript を有効にしてください。</p>
+      </div>
+    </noscript>
+    
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
