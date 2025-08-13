@@ -22,3 +22,56 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# System and user-specific files
+.bash_history
+.cache/
+.claude.json
+.claude.json.backup
+.claude/
+.codex/
+.config/
+.gemini/
+.git-credentials
+.gitconfig
+.npm/
+.npmrc
+.ssh/
+.termux/
+__pycache__/
+
+# Temporary and bundle files
+repo-bundle.bundle
+*.bundle
+
+# External projects and systems
+it-exam-learning-system/
+TTD-DR-System/
+obsidian-vault/
+mcp-servers/
+obsidian-mcp-server/
+obsidian-mcp-tools/
+iwate-event-navigator-standalone-temp/
+
+# Configuration fragments and temporary files
+eslintrc-config.json
+jest-config.js
+jest-setup.js
+lighthouse-config.json
+package-json-scripts.json
+playwright-config.ts
+github-actions-reusable/
+github-workflows-ci.yml
+
+# Documentation and template files in root
+contributing-guide.md
+deployment-checklist.md
+issue-template-feature.md
+pr-template.md
+"Obsidian運用改善_要件定義書.md"
+DEPLOYMENT_COMPLETION_REPORT.md
+
+# Research and planning files
+research_planner_execution_log.md
+sample_plan_*.json
+setup-dev-script.sh
