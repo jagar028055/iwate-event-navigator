@@ -1,9 +1,11 @@
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      plugins: [react()],
       base: '/iwate-event-navigator/',
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
@@ -16,16 +18,6 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         target: 'es2020',
-        rollupOptions: {
-          output: {
-            manualChunks: {
-              vendor: ['react', 'react-dom'],
-              maps: ['leaflet', 'react-leaflet'],
-              ai: ['@google/genai'],
-              utils: ['zustand', 'clsx']
-            }
-          }
-        },
         sourcemap: true,
         minify: 'esbuild',
         chunkSizeWarningLimit: 1000
