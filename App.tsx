@@ -1,132 +1,55 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MapPanel } from './components/MapPanel';
 import { EventDetailModal } from './components/EventDetailModal';
 import { LoadingSpinner } from './components/icons/LoadingSpinner';
-import { fetchIwateEvents } from './services/geminiService';
-import { EventInfo, Source } from './types';
-import { DATE_FILTERS, IWATE_AREA_KEYS, getEventArea } from './constants';
-
-const checkDateFilter = (event: EventInfo, filter: string): boolean => {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-
-  const eventDateStr = event.date.split(' - ')[0]; // Handle date ranges by taking the start date
-  const eventDate = new Date(eventDateStr);
-  if (isNaN(eventDate.getTime())) return false; // Invalid date format
-
-  eventDate.setHours(0, 0, 0, 0);
-
-  let startDate: Date, endDate: Date;
-
-  switch (filter) {
-    case 'today':
-      startDate = new Date(now);
-      endDate = new Date(now);
-      break;
-    case 'weekend':
-      startDate = new Date(now);
-      const dayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
-      startDate.setDate(now.getDate() - dayOfWeek + 6); // Upcoming Saturday
-      endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 1); // Upcoming Sunday
-      break;
-    case 'next_week':
-      startDate = new Date(now);
-      startDate.setDate(now.getDate() - now.getDay() + 8); // Next Monday
-      endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 6); // Next Sunday
-      break;
-    case 'this_month':
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      break;
-    default:
-      return true;
-  }
-  
-  // Check if event date is within the filter range
-  const [eventStartStr, eventEndStr] = event.date.split(' - ');
-  const eventStartDate = new Date(eventStartStr);
-  const eventEndDate = eventEndStr ? new Date(eventEndStr) : eventStartDate;
-  
-  if (isNaN(eventStartDate.getTime())) return false;
-  
-  eventStartDate.setHours(0, 0, 0, 0);
-  eventEndDate.setHours(0, 0, 0, 0);
-
-  return eventStartDate <= endDate && eventEndDate >= startDate;
-};
+import { useAppStore } from './store/appStore';
+import { useEventFilters } from './hooks/useEventFilters';
+import { useEventLoader } from './hooks/useEventLoader';
+import { DATE_FILTERS, IWATE_AREA_KEYS } from './constants';
 
 
 function App() {
-  const [events, setEvents] = useState<EventInfo[]>([]);
-  const [sources, setSources] = useState<Source[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<EventInfo | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    events,
+    sources,
+    selectedEvent,
+    selectEvent,
+  } = useAppStore();
   
-  const [categories, setCategories] = useState<string[]>(['すべて']);
-  const [activeCategory, setActiveCategory] = useState<string>('すべて');
-  const [activeArea, setActiveArea] = useState<string>('all');
-  const [activeDateFilter, setActiveDateFilter] = useState<string>('all');
+  const { loadEvents, isLoading, error } = useEventLoader();
+  const {
+    categories,
+    activeCategory,
+    setActiveCategory,
+    activeArea,
+    setActiveArea,
+    activeDateFilter,
+    setActiveDateFilter,
+    filteredEvents,
+    resetFilters
+  } = useEventFilters(events);
 
 
-  const loadEvents = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    setActiveCategory('すべて');
-    setActiveArea('all');
-    setActiveDateFilter('all');
-    try {
-      const { events: fetchedEvents, sources: fetchedSources } = await fetchIwateEvents();
-      setEvents(fetchedEvents);
-      setSources(fetchedSources);
-    } catch (err) {
-      console.error(err);
-      setError('イベント情報の取得に失敗しました。時間をおいて再度お試しください。');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const handleLoadEvents = async () => {
+    await loadEvents();
+    resetFilters();
+  };
 
   useEffect(() => {
-    loadEvents();
+    handleLoadEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (events.length > 0) {
-      const uniqueCategories = ['すべて', ...Array.from(new Set(events.map(e => e.category).filter(Boolean)))];
-      setCategories(uniqueCategories);
-    }
-  }, [events]);
 
-  const filteredEvents = useMemo(() => {
-    return events.filter(event => {
-      // Area filter
-      if (activeArea !== 'all' && getEventArea(event) !== activeArea) {
-        return false;
-      }
-      // Category filter
-      if (activeCategory !== 'すべて' && event.category !== activeCategory) {
-        return false;
-      }
-      // Date filter
-      if (activeDateFilter !== 'all' && !checkDateFilter(event, activeDateFilter)) {
-          return false;
-      }
-      return true;
-    });
-  }, [events, activeCategory, activeArea, activeDateFilter]);
 
   const handleSelectEvent = (event: EventInfo | null) => {
-    setSelectedEvent(event);
+    selectEvent(event);
   };
 
   const handleCloseModal = () => {
-    setSelectedEvent(null);
+    selectEvent(null);
   };
 
   return (
@@ -137,7 +60,7 @@ function App() {
             岩手イベントナビゲーター
           </h1>
           <button
-            onClick={loadEvents}
+            onClick={handleLoadEvents}
             disabled={isLoading}
             className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-slate-400 transition-colors flex items-center"
           >
@@ -160,7 +83,7 @@ function App() {
             <p className="text-red-700 text-xl font-semibold">エラーが発生しました</p>
             <p className="text-red-600 mt-2">{error}</p>
             <button
-              onClick={loadEvents}
+              onClick={handleLoadEvents}
               className="mt-6 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               再試行
