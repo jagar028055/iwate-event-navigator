@@ -3,20 +3,20 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <link rel="icon" type="image/png" href="/iwate-event-navigator/icons/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/iwate-event-navigator/manifest.json" />
     
     <!-- iOS PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="岩手イベント" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/iwate-event-navigator/icons/icon-192.png" />
     
     <!-- Windows PWA Support -->
-    <meta name="msapplication-TileImage" content="/icons/icon-144.png" />
+    <meta name="msapplication-TileImage" content="/iwate-event-navigator/icons/icon-144.png" />
     <meta name="msapplication-TileColor" content="#0d9488" />
     
     <!-- Meta tags for SEO and social -->
@@ -28,14 +28,14 @@
     <meta property="og:title" content="岩手イベントナビゲーター" />
     <meta property="og:description" content="岩手県内のイベント情報を地図で検索・発見" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/icons/icon-512.png" />
+    <meta property="og:image" content="/iwate-event-navigator/icons/icon-512.png" />
     <meta property="og:locale" content="ja_JP" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="岩手イベントナビゲーター" />
     <meta name="twitter:description" content="岩手県内のイベント情報を地図で検索・発見" />
-    <meta name="twitter:image" content="/icons/icon-512.png" />
+    <meta name="twitter:image" content="/iwate-event-navigator/icons/icon-512.png" />
     
     <!-- Theme color -->
     <meta name="theme-color" content="#0d9488" />
@@ -106,13 +106,13 @@
     </noscript>
     
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <!-- Script files will be injected by Vite during build -->
     
     <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
+          navigator.serviceWorker.register('/iwate-event-navigator/sw.js')
             .then((registration) => {
               console.log('SW registered: ', registration);
             })
