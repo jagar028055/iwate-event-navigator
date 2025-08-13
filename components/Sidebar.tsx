@@ -2,6 +2,9 @@
 import React from 'react';
 import { EventInfo, Source } from '../types';
 import { EventCard } from './EventCard';
+import { FlashSummary } from './FlashSummary';
+import { FilterBar } from './FilterBar';
+import { WordCloud } from './WordCloud';
 import { IWATE_AREAS } from '../constants';
 
 interface SidebarProps {
@@ -18,6 +21,7 @@ interface SidebarProps {
   dateFilters: { id: string, label: string }[];
   activeDateFilter: string;
   onSelectDateFilter: (filter: string) => void;
+  onResetFilters: () => void;
 }
 
 const FilterSection: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => (
@@ -43,61 +47,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
   dateFilters,
   activeDateFilter,
   onSelectDateFilter,
+  onResetFilters,
 }) => {
   return (
     <aside className="w-full md:w-1/3 lg:w-1/4 bg-white shadow-lg h-1/3 md:h-full flex flex-col border-r border-slate-200">
       
+      {/* --- Flash Summary --- */}
+      <div className="flex-shrink-0 p-2">
+        <FlashSummary 
+          events={events}
+          selectedArea={activeArea}
+          selectedCategory={activeCategory}
+        />
+      </div>
+
       {/* --- Filter Controls --- */}
-      <div className='flex-shrink-0'>
-        <FilterSection title="エリア絞り込み">
-          {areas.map(areaKey => (
-            <button
-              key={areaKey}
-              onClick={() => onSelectArea(areaKey)}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                activeArea === areaKey
-                  ? 'bg-blue-600 text-white font-semibold'
-                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-              }`}
-            >
-              {IWATE_AREAS[areaKey]}
-            </button>
-          ))}
-        </FilterSection>
+      <div className='flex-shrink-0 p-2'>
+        <FilterBar 
+          areas={areas}
+          activeArea={activeArea}
+          onSelectArea={onSelectArea}
+          categories={categories}
+          activeCategory={activeCategory}
+          onSelectCategory={onSelectCategory}
+          dateFilters={dateFilters}
+          activeDateFilter={activeDateFilter}
+          onSelectDateFilter={onSelectDateFilter}
+          onResetFilters={onResetFilters}
+        />
+      </div>
 
-        <FilterSection title="日程で絞り込み">
-          {dateFilters.map(filter => (
-            <button
-              key={filter.id}
-              onClick={() => onSelectDateFilter(filter.id)}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                activeDateFilter === filter.id
-                  ? 'bg-purple-600 text-white font-semibold'
-                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </FilterSection>
-
-        {categories.length > 1 && (
-          <FilterSection title="カテゴリ絞り込み">
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => onSelectCategory(category)}
-                className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                  activeCategory === category
-                    ? 'bg-teal-600 text-white font-semibold'
-                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </FilterSection>
-        )}
+      {/* --- WordCloud --- */}
+      <div className="flex-shrink-0 p-2">
+        <WordCloud events={events} maxWords={15} />
       </div>
       
       {/* --- Event List --- */}

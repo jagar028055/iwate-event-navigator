@@ -3,6 +3,7 @@
 export interface EventInfo {
   id: string;
   title: string;  // Changed from 'name' to 'title' for consistency
+  name?: string;  // For backward compatibility
   description: string;
   date: string;
   locationName: string;

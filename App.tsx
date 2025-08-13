@@ -107,6 +107,7 @@ function App() {
               dateFilters={DATE_FILTERS}
               activeDateFilter={activeDateFilter}
               onSelectDateFilter={setActiveDateFilter}
+              onResetFilters={resetFilters}
             />
             <MapPanel 
               events={filteredEvents}
