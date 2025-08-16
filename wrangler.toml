@@ -1,12 +1,6 @@
 name = "iwate-event-navigator"
 compatibility_date = "2024-08-16"
+pages_build_output_dir = "dist"
 
-[env.production]
-# Build configuration
-[env.production.build]
+[build]
 command = "npm run build"
-cwd = ""
-
-# Static site configuration
-[env.production.site]
-bucket = "dist"
