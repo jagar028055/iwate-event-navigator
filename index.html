@@ -104,18 +104,30 @@
     
     <script>
       const debugDiv = document.getElementById('debug-info');
+      debugDiv.innerHTML = 'Script started...';
       
       // Show JS load status
       window.addEventListener('error', (e) => {
         debugDiv.innerHTML += '<br>ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
+        console.error('Window error:', e);
       });
+      
+      // Test module loading
+      debugDiv.innerHTML += '<br>Attempting to load index.tsx...';
       
       // Test if main JS loads
       setTimeout(() => {
         if (!window.React) {
           debugDiv.innerHTML += '<br>React not loaded - JS file issue';
+        } else {
+          debugDiv.innerHTML += '<br>React loaded successfully!';
         }
-      }, 3000);
+      }, 5000);
+      
+      // Additional debugging
+      setTimeout(() => {
+        debugDiv.innerHTML += '<br>Environment check: ' + (typeof import !== 'undefined' ? 'Modules supported' : 'No module support');
+      }, 1000);
     </script>
     
     <script type="module" src="/index.tsx"></script>
