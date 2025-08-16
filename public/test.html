@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>環境変数テスト</title>
+</head>
+<body>
+    <h1>環境変数テスト</h1>
+    <div id="status">初期化中...</div>
+    <div id="env-vars"></div>
+    
+    <script>
+        document.getElementById('status').textContent = 'JavaScriptが動作しています';
+        
+        // 環境変数をテスト（ビルド時に注入される）
+        const envVars = {
+            'VITE_GEMINI_API_KEY defined': typeof VITE_GEMINI_API_KEY !== 'undefined',
+            'GEMINI_API_KEY defined': typeof GEMINI_API_KEY !== 'undefined'
+        };
+        
+        document.getElementById('env-vars').innerHTML = 
+            '<h2>環境変数チェック:</h2>' +
+            Object.entries(envVars).map(([key, value]) => 
+                `<p>${key}: ${value}</p>`
+            ).join('');
+            
+        console.log('Test page loaded successfully');
+        console.log('Environment variables:', envVars);
+    </script>
+</body>
+</html>
