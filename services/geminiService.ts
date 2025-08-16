@@ -2,9 +2,9 @@
 import { GoogleGenAI } from "@google/genai";
 import { EventInfo, Source } from '../types';
 
-const apiKey = import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 if (!apiKey) {
-  throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY in your environment.");
+  throw new Error("Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your environment.");
 }
 const ai = new GoogleGenAI(apiKey);
 

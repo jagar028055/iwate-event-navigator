@@ -20,7 +20,7 @@ export abstract class BaseCollector implements IEventCollector {
   public abstract readonly description: string;
 
   constructor() {
-    const apiKey = import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error("Gemini API key is not configured for BaseCollector");
     }
