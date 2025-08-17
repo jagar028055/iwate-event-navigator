@@ -31,7 +31,7 @@ export class MajorEventCollector extends BaseCollector {
       totalApiCalls = 1;
       
       // Parse the response
-      const { events, sources: responseSources } = this.parseCollectionResponse(responseText);
+      const { events, sources: responseSources } = await this.parseCollectionResponse(responseText);
       
       // Validate and enhance events
       const validEvents: EventInfo[] = [];

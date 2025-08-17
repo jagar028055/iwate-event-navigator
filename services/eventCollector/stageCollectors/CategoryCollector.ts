@@ -136,7 +136,7 @@ export class CategoryCollector extends BaseCollector {
       const responseText = await this.makeGeminiRequest(prompt, true);
       totalApiCalls = 1;
 
-      const { events, sources: responseSources } = this.parseCollectionResponse(responseText);
+      const { events, sources: responseSources } = await this.parseCollectionResponse(responseText);
       
       // カテゴリ特有のバリデーション
       const validEvents: EventInfo[] = [];

@@ -84,32 +84,29 @@ export abstract class BaseCollector implements IEventCollector {
 
   protected async makeGeminiRequest(prompt: string, useSearch: boolean = true): Promise<string> {
     try {
-      const config: any = {
+      // 共通のGemini API呼び出し関数を使用
+      const { callGeminiAPI } = await import('../geminiApiClient');
+      
+      const response = await callGeminiAPI(prompt, {
         model: this.model,
-        contents: prompt
-      };
-
-      if (useSearch) {
-        config.tools = [{ googleSearch: {} }];
-      }
-
-      const response = await this.ai.models.generateContent(config);
-      return response.text || '';
+        useSearch
+      });
+      
+      return response;
     } catch (error) {
       console.error(`Gemini API request failed in ${this.name}:`, error);
       throw new Error(`AI service temporarily unavailable: ${error.message}`);
     }
   }
 
-  protected cleanJsonString(str: string): string {
-    let cleaned = str.replace(/```json/g, '').replace(/```/g, '');
-    cleaned = cleaned.trim();
-    return cleaned;
+  protected async cleanJsonString(str: string): Promise<string> {
+    const { cleanJsonString } = await import('../geminiApiClient');
+    return cleanJsonString(str);
   }
 
-  protected parseCollectionResponse(responseText: string): { events: EventInfo[], sources?: Source[] } {
+  protected async parseCollectionResponse(responseText: string): Promise<{ events: EventInfo[], sources?: Source[] }> {
     try {
-      const cleanedText = this.cleanJsonString(responseText);
+      const cleanedText = await this.cleanJsonString(responseText);
       const parsed = JSON.parse(cleanedText);
       
       if (!parsed.events || !Array.isArray(parsed.events)) {

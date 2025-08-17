@@ -44,7 +44,7 @@ export class MunicipalityCollector extends BaseCollector {
           const responseText = await this.makeGeminiRequest(municipalityPrompt, true);
           totalApiCalls++;
 
-          const { events, sources: responseSources } = this.parseCollectionResponse(responseText);
+          const { events, sources: responseSources } = await this.parseCollectionResponse(responseText);
           
           // イベントの検証
           const validEvents: EventInfo[] = [];
@@ -276,7 +276,7 @@ ${this.getRegionalKeywords(municipality.region)}
           const responseText = await this.makeGeminiRequest(municipalityPrompt, true);
           totalApiCalls++;
 
-          const { events, sources: responseSources } = this.parseCollectionResponse(responseText);
+          const { events, sources: responseSources } = await this.parseCollectionResponse(responseText);
           
           const validEvents: EventInfo[] = [];
           for (const event of events) {
