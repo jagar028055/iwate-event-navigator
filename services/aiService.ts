@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+// REST API直接呼び出しに変更（Google GenAIライブラリのブラウザ制限を回避）
 import type {
   EventInfo,
   RecommendationRequest,
@@ -9,8 +9,8 @@ import type {
 } from '../types';
 
 class AIService {
-  private ai: GoogleGenAI;
-  private model: string = "gemini-2.0-flash-exp";
+  private apiKey: string;
+  private model: string = "gemini-1.5-pro";
 
   constructor() {
     // Viteビルド時に置換される特別な変数を使用
@@ -28,7 +28,7 @@ class AIService {
     }
     
     console.log("AIService: API key configured successfully");
-    this.ai = new GoogleGenAI(apiKey);
+    this.apiKey = apiKey;
   }
 
   private cleanJsonString(str: string): string {

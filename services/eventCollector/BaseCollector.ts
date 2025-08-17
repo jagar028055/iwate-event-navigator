@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+// REST API直接呼び出しに変更（Google GenAIライブラリのブラウザ制限を回避）
 import { 
   IEventCollector, 
   CollectionStage, 
@@ -12,8 +12,8 @@ import {
 import { EventInfo, Source } from '../../types';
 
 export abstract class BaseCollector implements IEventCollector {
-  protected ai: GoogleGenAI;
-  protected model: string = "gemini-2.5-flash";
+  protected apiKey: string;
+  protected model: string = "gemini-1.5-pro";
   
   public abstract readonly stage: CollectionStage;
   public abstract readonly name: string;
@@ -35,7 +35,7 @@ export abstract class BaseCollector implements IEventCollector {
     }
     
     console.log("BaseCollector: API key configured successfully");
-    this.ai = new GoogleGenAI(apiKey);
+    this.apiKey = apiKey;
   }
 
   // Abstract methods to be implemented by concrete collectors

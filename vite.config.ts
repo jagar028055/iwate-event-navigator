@@ -48,7 +48,6 @@ export default defineConfig(({ mode }) => {
           'react-dom',
           'leaflet',
           'react-leaflet', 
-          '@google/genai',
           'zustand',
           'clsx'
         ]

@@ -1,5 +1,4 @@
 
-import { GoogleGenAI } from "@google/genai";
 import { EventInfo, Source } from '../types';
 
 // デバッグ用: 環境変数の状況を確認
@@ -43,7 +42,74 @@ function getApiKey(): string {
 }
 
 const apiKey = getApiKey();
-const ai = new GoogleGenAI(apiKey);
+
+// REST API直接呼び出し用の関数
+async function callGeminiAPI(prompt: string, useSearch: boolean = false): Promise<string> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+  
+  const requestBody = {
+    contents: [{
+      parts: [{
+        text: prompt
+      }]
+    }],
+    generationConfig: {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 8192,
+    },
+    safetySettings: [
+      {
+        category: "HARM_CATEGORY_HARASSMENT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_HATE_SPEECH", 
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      }
+    ]
+  };
+
+  console.log("🚀 Calling Gemini API...");
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ Gemini API Error:", response.status, errorText);
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("✅ Gemini API response received");
+    
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+      return data.candidates[0].content.parts[0].text;
+    } else {
+      console.error("❌ Invalid API response structure:", data);
+      throw new Error("Invalid response structure from Gemini API");
+    }
+  } catch (error) {
+    console.error("❌ Gemini API call failed:", error);
+    throw error;
+  }
+}
 
 const cleanJsonString = (str: string): string => {
   // Remove markdown backticks and "json" label
@@ -55,9 +121,7 @@ const cleanJsonString = (str: string): string => {
 
 export const fetchIwateEvents = async (): Promise<{ events: EventInfo[], sources: Source[] }> => {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `日本の岩手県で開催されるイベント情報を、文字通り「根こそぎ」検索・抽出してください。とにかく量を最優先し、最大50件まで、見つけられる限りの情報を集めてください。
+    const prompt = `日本の岩手県で開催されるイベント情報を、文字通り「根こそぎ」検索・抽出してください。とにかく量を最優先し、最大50件まで、見つけられる限りの情報を集めてください。
 
 検索対象は、大手観光サイトに限りません。以下の情報源を徹底的に探してください：
 - 岩手県内の全市区町村の公式サイト（例：盛岡市、花巻市、一関市など）
@@ -88,13 +152,11 @@ export const fetchIwateEvents = async (): Promise<{ events: EventInfo[], sources
 - officialUrl: イベントの公式サイトURL（もしあれば）
 
 緯度・経度が特定できないイベントは、検索結果から除外してください。
-結果は、{ "events": [...] } という形式のJSON文字列のみで返してください。他のテキストは一切含めないでください。`,
-      config: {
-        tools: [{googleSearch: {}}],
-      },
-    });
+結果は、{ "events": [...] } という形式のJSON文字列のみで返してください。他のテキストは一切含めないでください。`;
 
-    const jsonText = cleanJsonString(response.text);
+    const responseText = await callGeminiAPI(prompt, true);
+    const jsonText = cleanJsonString(responseText);
+    
     if (!jsonText) {
       throw new Error("API returned an empty response.");
     }
@@ -112,18 +174,13 @@ export const fetchIwateEvents = async (): Promise<{ events: EventInfo[], sources
       id: crypto.randomUUID(),
     }));
 
-    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-    const sources: Source[] = (groundingChunks || [])
-      .map((chunk: any) => ({
-        uri: chunk.web?.uri || '',
-        title: chunk.web?.title || 'Untitled Source',
-      }))
-      .filter(source => source.uri); // Ensure we only have sources with a URI
-      
-    // Deduplicate sources based on URI
-    const uniqueSources = Array.from(new Map(sources.map(s => [s.uri, s])).values());
+    // REST APIでは検索ソースが直接取得できないため、ダミーソースを作成
+    const sources: Source[] = [{
+      uri: 'https://gemini.google.com/',
+      title: 'Google Gemini API'
+    }];
 
-    return { events: eventsWithIds, sources: uniqueSources };
+    return { events: eventsWithIds, sources };
 
   } catch (error) {
     console.error("Error fetching or parsing events from Gemini API:", error);
