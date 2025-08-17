@@ -4,21 +4,19 @@ import { EventInfo, Source } from '../types';
 
 // デバッグ用: 環境変数の状況を確認
 console.log('Environment variables debug:', {
-  VITE_GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY ? 'SET' : 'NOT SET',
   GEMINI_API_KEY: import.meta.env.GEMINI_API_KEY ? 'SET' : 'NOT SET',
   process_env_GEMINI_API_KEY: process.env.GEMINI_API_KEY ? 'SET' : 'NOT SET',
   mode: import.meta.env.MODE,
   prod: import.meta.env.PROD
 });
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const apiKey = import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 if (!apiKey) {
   console.error("API Key debugging - All attempted sources:", {
-    'import.meta.env.VITE_GEMINI_API_KEY': import.meta.env.VITE_GEMINI_API_KEY,
     'import.meta.env.GEMINI_API_KEY': import.meta.env.GEMINI_API_KEY,
     'process.env.GEMINI_API_KEY': process.env.GEMINI_API_KEY
   });
-  throw new Error("Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your environment.");
+  throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY in your environment.");
 }
 const ai = new GoogleGenAI(apiKey);
 
