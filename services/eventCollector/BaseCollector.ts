@@ -20,10 +20,21 @@ export abstract class BaseCollector implements IEventCollector {
   public abstract readonly description: string;
 
   constructor() {
-    const apiKey = import.meta.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    // Viteビルド時に置換される特別な変数を使用
+    declare const __GEMINI_API_KEY__: string | undefined;
+    
+    const apiKey = __GEMINI_API_KEY__ || 
+                   import.meta.env.GEMINI_API_KEY || 
+                   import.meta.env.VITE_GEMINI_API_KEY ||
+                   process.env.GEMINI_API_KEY ||
+                   process.env.VITE_GEMINI_API_KEY;
+                   
     if (!apiKey) {
+      console.error("BaseCollector: API key not found in any source");
       throw new Error("Gemini API key is not configured for BaseCollector");
     }
+    
+    console.log("BaseCollector: API key configured successfully");
     this.ai = new GoogleGenAI(apiKey);
   }
 

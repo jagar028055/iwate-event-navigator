@@ -10,20 +10,39 @@ console.log('Environment variables debug:', {
   prod: import.meta.env.PROD
 });
 
-// Viteビルド時にdefineで置換される変数を使用
-const apiKey = (globalThis as any).GEMINI_API_KEY || 
-               import.meta.env.GEMINI_API_KEY || 
-               import.meta.env.VITE_GEMINI_API_KEY || 
-               process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  console.error("API Key debugging - All attempted sources:", {
-    'globalThis.GEMINI_API_KEY': (globalThis as any).GEMINI_API_KEY,
-    'import.meta.env.GEMINI_API_KEY': import.meta.env.GEMINI_API_KEY,
-    'import.meta.env.VITE_GEMINI_API_KEY': import.meta.env.VITE_GEMINI_API_KEY,
-    'process.env.GEMINI_API_KEY': process.env.GEMINI_API_KEY
+// Viteビルド時に置換される特別な変数を使用
+declare const __GEMINI_API_KEY__: string | undefined;
+
+function getApiKey(): string {
+  // 複数のソースから環境変数を取得
+  const sources = [
+    __GEMINI_API_KEY__,
+    import.meta.env.GEMINI_API_KEY,
+    import.meta.env.VITE_GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY,
+    process.env.VITE_GEMINI_API_KEY
+  ];
+  
+  console.log("API Key debugging - All attempted sources:", {
+    '__GEMINI_API_KEY__': __GEMINI_API_KEY__ ? 'SET' : 'NOT SET',
+    'import.meta.env.GEMINI_API_KEY': import.meta.env.GEMINI_API_KEY ? 'SET' : 'NOT SET',
+    'import.meta.env.VITE_GEMINI_API_KEY': import.meta.env.VITE_GEMINI_API_KEY ? 'SET' : 'NOT SET',
+    'process.env.GEMINI_API_KEY': process.env.GEMINI_API_KEY ? 'SET' : 'NOT SET',
+    'process.env.VITE_GEMINI_API_KEY': process.env.VITE_GEMINI_API_KEY ? 'SET' : 'NOT SET'
   });
-  throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY in your environment.");
+  
+  const apiKey = sources.find(key => key && key.trim() !== '' && key !== 'undefined');
+  
+  if (!apiKey) {
+    console.error("❌ API Key not found in any source");
+    throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY in your environment.");
+  }
+  
+  console.log("✅ API Key found, length:", apiKey.length, "preview:", apiKey.substring(0, 10) + '...');
+  return apiKey;
 }
+
+const apiKey = getApiKey();
 const ai = new GoogleGenAI(apiKey);
 
 const cleanJsonString = (str: string): string => {
