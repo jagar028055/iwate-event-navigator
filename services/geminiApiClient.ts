@@ -5,22 +5,45 @@
 declare const __GEMINI_API_KEY__: string | undefined;
 
 function getApiKey(): string {
-  // 複数のソースから環境変数を取得
+  // ブラウザ環境で安全に環境変数を取得
   const sources = [
-    __GEMINI_API_KEY__,
-    import.meta.env.GEMINI_API_KEY,
-    import.meta.env.VITE_GEMINI_API_KEY,
-    process.env.GEMINI_API_KEY,
-    process.env.VITE_GEMINI_API_KEY
+    // Viteビルド時に置換される値（最優先）
+    typeof __GEMINI_API_KEY__ !== 'undefined' ? __GEMINI_API_KEY__ : undefined,
+    
+    // ブラウザ環境でのimport.meta.env（Vite経由）
+    import.meta?.env?.GEMINI_API_KEY,
+    import.meta?.env?.VITE_GEMINI_API_KEY,
+    
+    // Viteのdefineで置換される値
+    process?.env?.GEMINI_API_KEY,
+    process?.env?.VITE_GEMINI_API_KEY,
+    
+    // 開発時のフォールバック（window.env経由）
+    typeof window !== 'undefined' && (window as any).env ? (window as any).env.GEMINI_API_KEY : undefined
   ];
   
-  const apiKey = sources.find(key => key && key.trim() !== '' && key !== 'undefined');
+  // 有効なキーを探す
+  const apiKey = sources.find(key => 
+    key && 
+    typeof key === 'string' && 
+    key.trim() !== '' && 
+    key !== 'undefined' && 
+    key !== 'null' &&
+    key.length > 10 // 最小限の長さチェック
+  );
   
   if (!apiKey) {
     console.error("❌ Gemini API Key not found in any source");
+    console.error("Available sources check:", {
+      '__GEMINI_API_KEY__': typeof __GEMINI_API_KEY__ !== 'undefined' ? 'SET' : 'NOT_SET',
+      'import.meta.env': import.meta?.env ? 'AVAILABLE' : 'NOT_AVAILABLE',
+      'process.env': process?.env ? 'AVAILABLE' : 'NOT_AVAILABLE',
+      'window.env': typeof window !== 'undefined' && (window as any).env ? 'AVAILABLE' : 'NOT_AVAILABLE'
+    });
     throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY in your environment.");
   }
   
+  console.log("✅ Gemini API Key found and configured");
   return apiKey;
 }
 
@@ -114,9 +137,44 @@ export async function callGeminiAPI(
 }
 
 export function cleanJsonString(str: string): string {
-  // Remove markdown backticks and "json" label
-  let cleaned = str.replace(/```json/g, '').replace(/```/g, '');
-  // Trim whitespace
-  cleaned = cleaned.trim();
-  return cleaned;
+  try {
+    // Remove markdown backticks and "json" label
+    let cleaned = str.replace(/```json/g, '').replace(/```/g, '');
+    
+    // Remove any leading/trailing whitespace and line breaks
+    cleaned = cleaned.trim();
+    
+    // Fix common JSON formatting issues
+    // 1. Remove any text before the first '{'
+    const firstBrace = cleaned.indexOf('{');
+    if (firstBrace > 0) {
+      cleaned = cleaned.substring(firstBrace);
+    }
+    
+    // 2. Remove any text after the last '}'
+    const lastBrace = cleaned.lastIndexOf('}');
+    if (lastBrace >= 0 && lastBrace < cleaned.length - 1) {
+      cleaned = cleaned.substring(0, lastBrace + 1);
+    }
+    
+    // 3. Fix unquoted property names (common AI response issue)
+    cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":');
+    
+    // 4. Fix single quotes to double quotes
+    cleaned = cleaned.replace(/'/g, '"');
+    
+    // 5. Remove trailing commas
+    cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
+    
+    // 6. Fix escaped quotes issues
+    cleaned = cleaned.replace(/\\"/g, '\\"');
+    
+    // 7. Remove any control characters that might cause issues
+    cleaned = cleaned.replace(/[\x00-\x1F\x7F]/g, '');
+    
+    return cleaned;
+  } catch (error) {
+    console.warn('JSON cleaning failed, returning original string:', error);
+    return str;
+  }
 }

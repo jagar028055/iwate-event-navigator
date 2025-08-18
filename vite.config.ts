@@ -28,8 +28,11 @@ export default defineConfig(({ mode }) => {
         '__GEMINI_API_KEY__': JSON.stringify(geminiApiKey),
         'import.meta.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
         'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKey),
+        // ブラウザ環境でのprocess.envアクセスを安全に処理
         'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
-        'process.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKey)
+        'process.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKey),
+        // Node.js環境変数の存在チェックを安全に処理（global置換）
+        'process': 'undefined'
       },
       resolve: {
         alias: {
@@ -40,7 +43,17 @@ export default defineConfig(({ mode }) => {
         target: 'es2020',
         sourcemap: true,
         minify: 'esbuild',
-        chunkSizeWarningLimit: 1000
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+          output: {
+            format: 'es',
+            manualChunks: {
+              'vendor': ['react', 'react-dom'],
+              'maps': ['leaflet', 'react-leaflet'],
+              'gemini': ['./services/geminiApiClient']
+            }
+          }
+        }
       },
       optimizeDeps: {
         include: [

@@ -10,6 +10,7 @@ import {
   DataFreshness
 } from './types';
 import { EventInfo, Source } from '../../types';
+import { callGeminiAPI, cleanJsonString } from '../geminiApiClient';
 
 export abstract class BaseCollector implements IEventCollector {
   protected apiKey: string;
@@ -23,14 +24,36 @@ export abstract class BaseCollector implements IEventCollector {
     // Viteビルド時に置換される特別な変数を使用
     declare const __GEMINI_API_KEY__: string | undefined;
     
-    const apiKey = __GEMINI_API_KEY__ || 
-                   import.meta.env.GEMINI_API_KEY || 
-                   import.meta.env.VITE_GEMINI_API_KEY ||
-                   process.env.GEMINI_API_KEY ||
-                   process.env.VITE_GEMINI_API_KEY;
+    // ブラウザ環境で安全に環境変数を取得
+    const sources = [
+      // Viteビルド時に置換される値（最優先）
+      typeof __GEMINI_API_KEY__ !== 'undefined' ? __GEMINI_API_KEY__ : undefined,
+      
+      // ブラウザ環境でのimport.meta.env（Vite経由）
+      import.meta?.env?.GEMINI_API_KEY,
+      import.meta?.env?.VITE_GEMINI_API_KEY,
+      
+      // Viteのdefineで置換される値
+      process?.env?.GEMINI_API_KEY,
+      process?.env?.VITE_GEMINI_API_KEY
+    ];
+    
+    const apiKey = sources.find(key => 
+      key && 
+      typeof key === 'string' && 
+      key.trim() !== '' && 
+      key !== 'undefined' && 
+      key !== 'null' &&
+      key.length > 10
+    );
                    
     if (!apiKey) {
       console.error("BaseCollector: API key not found in any source");
+      console.error("BaseCollector: Available sources check:", {
+        '__GEMINI_API_KEY__': typeof __GEMINI_API_KEY__ !== 'undefined' ? 'SET' : 'NOT_SET',
+        'import.meta.env': import.meta?.env ? 'AVAILABLE' : 'NOT_AVAILABLE',
+        'process.env': process?.env ? 'AVAILABLE' : 'NOT_AVAILABLE'
+      });
       throw new Error("Gemini API key is not configured for BaseCollector");
     }
     
@@ -84,9 +107,7 @@ export abstract class BaseCollector implements IEventCollector {
 
   protected async makeGeminiRequest(prompt: string, useSearch: boolean = true): Promise<string> {
     try {
-      // 共通のGemini API呼び出し関数を使用
-      const { callGeminiAPI } = await import('../geminiApiClient');
-      
+      // 静的インポートに変更済み
       const response = await callGeminiAPI(prompt, {
         model: this.model,
         useSearch
@@ -100,26 +121,109 @@ export abstract class BaseCollector implements IEventCollector {
   }
 
   protected async cleanJsonString(str: string): Promise<string> {
-    const { cleanJsonString } = await import('../geminiApiClient');
+    // 静的インポートに変更済み
     return cleanJsonString(str);
   }
 
   protected async parseCollectionResponse(responseText: string): Promise<{ events: EventInfo[], sources?: Source[] }> {
     try {
+      console.log(`${this.name}: Starting JSON parsing, response length: ${responseText.length}`);
+      
       const cleanedText = await this.cleanJsonString(responseText);
-      const parsed = JSON.parse(cleanedText);
+      console.log(`${this.name}: Cleaned JSON, length: ${cleanedText.length}`);
+      
+      // Additional validation before parsing
+      if (!cleanedText || cleanedText.length < 10) {
+        throw new Error("Response text is too short or empty");
+      }
+      
+      if (!cleanedText.startsWith('{') || !cleanedText.endsWith('}')) {
+        throw new Error("Response does not appear to be valid JSON object");
+      }
+      
+      let parsed;
+      try {
+        parsed = JSON.parse(cleanedText);
+      } catch (parseError) {
+        console.error(`${this.name}: JSON parse error details:`, {
+          error: parseError.message,
+          responseLength: responseText.length,
+          cleanedLength: cleanedText.length,
+          firstChars: cleanedText.substring(0, 100),
+          lastChars: cleanedText.substring(Math.max(0, cleanedText.length - 100))
+        });
+        
+        // Try one more time with additional cleaning
+        const extraCleanedText = this.extraCleanJson(cleanedText);
+        try {
+          parsed = JSON.parse(extraCleanedText);
+          console.log(`${this.name}: Successfully parsed with extra cleaning`);
+        } catch (secondParseError) {
+          throw new Error(`JSON parsing failed even with extra cleaning: ${secondParseError.message}`);
+        }
+      }
+      
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error("Parsed result is not a valid object");
+      }
       
       if (!parsed.events || !Array.isArray(parsed.events)) {
-        throw new Error("Invalid response format: missing events array");
+        console.warn(`${this.name}: No events array found, attempting to extract from alternative structures`);
+        
+        // Try to find events in nested structures
+        if (parsed.data && Array.isArray(parsed.data.events)) {
+          parsed.events = parsed.data.events;
+        } else if (parsed.result && Array.isArray(parsed.result.events)) {
+          parsed.events = parsed.result.events;
+        } else {
+          throw new Error("Invalid response format: missing events array");
+        }
       }
 
+      console.log(`${this.name}: Successfully parsed ${parsed.events.length} events`);
+      
       return {
         events: parsed.events,
         sources: parsed.sources || []
       };
     } catch (error) {
-      console.error(`JSON parsing failed in ${this.name}:`, error);
+      console.error(`${this.name}: JSON parsing failed:`, {
+        error: error.message,
+        responsePreview: responseText.substring(0, 200) + '...',
+        responseLength: responseText.length
+      });
       throw new Error(`Failed to parse collection response: ${error.message}`);
+    }
+  }
+
+  private extraCleanJson(jsonStr: string): string {
+    try {
+      // Additional aggressive cleaning for problematic responses
+      let cleaned = jsonStr;
+      
+      // Remove any Unicode BOM
+      cleaned = cleaned.replace(/^\uFEFF/, '');
+      
+      // Remove any HTML entities
+      cleaned = cleaned.replace(/&quot;/g, '"')
+                      .replace(/&apos;/g, "'")
+                      .replace(/&lt;/g, '<')
+                      .replace(/&gt;/g, '>')
+                      .replace(/&amp;/g, '&');
+      
+      // Fix common malformed JSON patterns
+      cleaned = cleaned.replace(/,\s*}/g, '}')  // trailing comma before }
+                      .replace(/,\s*]/g, ']')   // trailing comma before ]
+                      .replace(/}\s*{/g, '},{') // missing comma between objects
+                      .replace(/]\s*\[/g, '],['); // missing comma between arrays
+      
+      // Ensure proper spacing around colons and commas
+      cleaned = cleaned.replace(/:\s*([^",{\[\s][^",}\]]*)/g, ': "$1"'); // quote unquoted string values
+      
+      return cleaned;
+    } catch (error) {
+      console.warn('Extra JSON cleaning failed:', error);
+      return jsonStr;
     }
   }
 
