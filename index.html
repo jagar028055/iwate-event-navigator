@@ -141,17 +141,12 @@
     
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration - Simplified -->
     <script>
+      // Simplified service worker registration for Cloudflare Pages
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          console.log('SW registration skipped');
         });
       }
     </script>
