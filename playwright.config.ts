@@ -13,7 +13,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
@@ -71,7 +71,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: process.env.CI ? undefined : {
     command: 'npm run preview',
-    url: 'http://localhost:5173',
+    url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

@@ -114,24 +114,32 @@
       });
       
       // Test module loading
-      debugDiv.innerHTML += '<br>Attempting to load index.tsx...';
+      debugDiv.innerHTML += '<br>Attempting to load main.tsx...';
+      
+      // Enhanced module support detection
+      setTimeout(() => {
+        debugDiv.innerHTML += '<br>Module import support: ' + (typeof import !== 'undefined' ? 'YES' : 'NO');
+        debugDiv.innerHTML += '<br>ES6 support: ' + (typeof Symbol !== 'undefined' ? 'YES' : 'NO');
+        debugDiv.innerHTML += '<br>Browser: ' + navigator.userAgent.split(' ')[0];
+      }, 1000);
       
       // Test if main JS loads
       setTimeout(() => {
         if (!window.React) {
-          debugDiv.innerHTML += '<br>React not loaded - JS file issue';
+          debugDiv.innerHTML += '<br>❌ React not loaded - JS file issue';
         } else {
-          debugDiv.innerHTML += '<br>React loaded successfully!';
+          debugDiv.innerHTML += '<br>✅ React loaded successfully!';
         }
       }, 5000);
       
-      // Additional debugging
-      setTimeout(() => {
-        debugDiv.innerHTML += '<br>Environment check: ' + (typeof import !== 'undefined' ? 'Modules supported' : 'No module support');
-      }, 1000);
+      // Module error detection
+      window.addEventListener('unhandledrejection', (e) => {
+        debugDiv.innerHTML += '<br>🚨 Promise rejection: ' + e.reason;
+        console.error('Unhandled promise rejection:', e);
+      });
     </script>
     
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
     
     <!-- Service Worker Registration -->
     <script>

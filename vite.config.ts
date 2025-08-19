@@ -40,13 +40,16 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
-        target: 'es2020',
+        target: 'es2015',
         sourcemap: true,
         minify: 'esbuild',
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
           output: {
             format: 'es',
+            entryFileNames: 'assets/[name]-[hash].js',
+            chunkFileNames: 'assets/[name]-[hash].js',
+            assetFileNames: 'assets/[name]-[hash].[ext]',
             manualChunks: {
               'vendor': ['react', 'react-dom'],
               'maps': ['leaflet', 'react-leaflet'],
