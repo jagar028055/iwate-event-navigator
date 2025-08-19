@@ -76,6 +76,10 @@ export default defineConfig(({ mode }) => {
         hmr: {
           overlay: false
         }
+      },
+      preview: {
+        port: 4173,
+        host: true
       }
     };
 });

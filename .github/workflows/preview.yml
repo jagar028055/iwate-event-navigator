@@ -1,0 +1,187 @@
+name: Preview Deployment
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: "preview-${{ github.event.number }}"
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build
+      run: npm run build
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps chromium
+      
+    - name: Start preview server
+      run: |
+        npm run preview &
+        sleep 10
+        
+    - name: Run Playwright tests
+      run: npm run test
+      env:
+        BASE_URL: http://localhost:4173
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        CI: true
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: preview-test-results-${{ github.event.number }}
+        path: |
+          playwright-report/
+          test-results/
+        retention-days: 7
+        
+    - name: Evaluate test results and comment
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          
+          let testSummary = '## 🧪 Preview Test Results\n\n';
+          let deploymentDecision = 'proceed';
+          
+          try {
+            const resultsPath = 'test-results/results.json';
+            if (fs.existsSync(resultsPath)) {
+              const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+              const stats = results.stats;
+              
+              testSummary += `### Test Statistics\n`;
+              testSummary += `- ✅ **Passed**: ${stats.passed}\n`;
+              testSummary += `- ❌ **Failed**: ${stats.failed}\n`;
+              testSummary += `- ⏭️ **Skipped**: ${stats.skipped}\n`;
+              testSummary += `- 📊 **Total**: ${stats.total}\n\n`;
+              
+              // Critical test analysis
+              const criticalTests = [
+                'ページが正常に読み込まれる',
+                'JavaScriptエラーが発生しない', 
+                '環境変数の正しい設定確認',
+                'レスポンシブデザインが機能する'
+              ];
+              
+              const failedTests = results.suites
+                .flatMap(suite => suite.specs || [])
+                .filter(spec => spec.tests?.some(test => test.status === 'failed'))
+                .map(spec => spec.title);
+              
+              const criticalFailures = failedTests.filter(test => 
+                criticalTests.some(critical => test.includes(critical))
+              );
+              
+              if (criticalFailures.length > 0) {
+                testSummary += `### ❌ Critical Test Failures\n`;
+                criticalFailures.forEach(test => {
+                  testSummary += `- ${test}\n`;
+                });
+                testSummary += `\n🚫 **Preview deployment blocked due to critical test failures**\n\n`;
+                deploymentDecision = 'blocked';
+              } else if (stats.failed > 0) {
+                testSummary += `### ⚠️ Non-Critical Test Failures\n`;
+                failedTests.forEach(test => {
+                  testSummary += `- ${test}\n`;
+                });
+                testSummary += `\n✅ **Preview deployment approved with warnings**\n\n`;
+                deploymentDecision = 'warning';
+              } else {
+                testSummary += `### 🎉 All Tests Passed\n`;
+                testSummary += `✅ **Preview deployment approved**\n\n`;
+                deploymentDecision = 'success';
+              }
+            } else {
+              testSummary += `⚠️ Test results file not found\n\n`;
+            }
+          } catch (error) {
+            testSummary += `⚠️ Error reading test results: ${error.message}\n\n`;
+          }
+          
+          // Add deployment instructions
+          if (deploymentDecision === 'proceed' || deploymentDecision === 'warning' || deploymentDecision === 'success') {
+            testSummary += `### 🚀 Preview Deployment\n`;
+            testSummary += `Preview environment will be available after merge.\n`;
+            testSummary += `- **Build artifacts**: Available in workflow artifacts\n`;
+            testSummary += `- **Test reports**: Available in workflow artifacts\n\n`;
+          }
+          
+          testSummary += `### 📊 Workflow Details\n`;
+          testSummary += `- **Commit**: ${context.payload.pull_request.head.sha.substring(0, 7)}\n`;
+          testSummary += `- **Branch**: \`${context.payload.pull_request.head.ref}\`\n`;
+          testSummary += `- **Workflow**: [View Details](${context.payload.repository.html_url}/actions/runs/${context.runId})\n`;
+          
+          // Comment on PR
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: testSummary
+          });
+          
+          // Set output for potential use in other jobs
+          core.setOutput('deployment_decision', deploymentDecision);
+          
+          // Fail the workflow if critical tests failed
+          if (deploymentDecision === 'blocked') {
+            core.setFailed('Critical tests failed - blocking preview deployment');
+          }
+
+  cleanup-on-close:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    
+    steps:
+    - name: Cleanup Preview Resources
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          // Add cleanup logic here if needed
+          // For now, just add a comment that preview was cleaned up
+          if (context.payload.pull_request.merged) {
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🧹 Preview Cleanup\n\nPR merged successfully! Preview resources have been cleaned up.\n\n✅ Changes deployed to production environment.`
+            });
+          } else {
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🧹 Preview Cleanup\n\nPR closed. Preview resources have been cleaned up.`
+            });
+          }

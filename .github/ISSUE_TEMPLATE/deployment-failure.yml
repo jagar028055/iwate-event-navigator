@@ -1,0 +1,98 @@
+name: 🚨 Deployment Failure (Auto-generated)
+description: デプロイメント失敗の自動報告用テンプレート
+title: "🚨 Deployment Failed - [DATE]"
+labels: ["deployment-failure", "auto-created", "bug", "priority:high"]
+projects: ["iwate-event-navigator"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🚨 デプロイメント失敗レポート
+        
+        このIssueは自動的に作成されました。デプロイメントの失敗を検知し、修正プロセスを開始するために使用されます。
+
+  - type: input
+    id: workflow-run
+    attributes:
+      label: Workflow Run URL
+      description: 失敗したGitHub ActionsのWorkflow Run URL
+      placeholder: https://github.com/owner/repo/actions/runs/12345
+    validations:
+      required: true
+
+  - type: input
+    id: commit-hash
+    attributes:
+      label: Commit Hash
+      description: 失敗したコミットのハッシュ
+      placeholder: abc123def456
+    validations:
+      required: true
+
+  - type: dropdown
+    id: failure-type
+    attributes:
+      label: 失敗タイプ
+      description: どの段階で失敗しましたか？
+      options:
+        - Build failure (ビルド失敗)
+        - Deploy failure (デプロイ失敗)  
+        - Environment variables (環境変数)
+        - Dependencies (依存関係)
+        - TypeScript errors (TypeScriptエラー)
+        - Other (その他)
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: エラーログ
+      description: 関連するエラーログを貼り付けてください
+      render: shell
+      placeholder: |
+        Error: Build failed with exit code 1
+        npm ERR! code ELIFECYCLE
+        ...
+
+  - type: checkboxes
+    id: auto-fix-checklist
+    attributes:
+      label: 🤖 自動修正チェックリスト
+      description: Claude Codeによる自動修正の進行状況
+      options:
+        - label: エラーログ分析完了
+        - label: 原因特定完了
+        - label: 修正案生成完了
+        - label: 修正実装完了
+        - label: テスト実行完了
+        - label: 再デプロイ完了
+
+  - type: textarea
+    id: fix-details
+    attributes:
+      label: 修正詳細
+      description: 実施した修正内容（自動入力されます）
+      placeholder: |
+        修正内容:
+        - 環境変数 GEMINI_API_KEY の設定を修正
+        - package.json の依存関係を更新
+        - TypeScriptエラー 3件を修正
+        
+        関連コミット:
+        - fix: resolve environment variable issue (abc123d)
+        - fix: update dependencies (def456e)
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 📞 サポート情報
+        
+        このIssueは自動修正システムによって管理されています。
+        
+        - 🤖 **自動修正**: Claude Codeが問題を分析し、修正を試行します
+        - ⏱️ **修正時間**: 通常10-15分で完了予定
+        - 🔄 **再試行**: 修正が失敗した場合、複数回試行されます
+        - ✅ **完了時**: 修正完了時にこのIssueは自動でクローズされます
+        
+        手動での介入が必要な場合は、このIssueにコメントを追加してください。

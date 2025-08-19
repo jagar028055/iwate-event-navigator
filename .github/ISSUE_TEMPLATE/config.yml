@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🤖 Claude Code Auto-Fix System
+    url: https://github.com/anthropics/claude-code
+    about: 自動修正システムについての詳細情報
+  - name: 📊 Deployment Status
+    url: https://github.com/${{ github.repository }}/actions
+    about: 現在のデプロイメント状況を確認
