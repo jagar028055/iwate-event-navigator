@@ -104,45 +104,18 @@
     
     <div id="root"></div>
     
-    <!-- Debug info for mobile -->
-    <div id="debug-info" style="position: fixed; top: 0; left: 0; background: black; color: white; padding: 10px; font-size: 12px; z-index: 9999; max-width: 100vw; overflow-wrap: break-word;">
-      Loading...
-    </div>
-    
+    <!-- Error monitoring for CI -->
     <script>
-      const debugDiv = document.getElementById('debug-info');
-      debugDiv.innerHTML = 'Script started...';
-      
-      // Show JS load status
-      window.addEventListener('error', (e) => {
-        debugDiv.innerHTML += '<br>ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
-        console.error('Window error:', e);
-      });
-      
-      // Test module loading
-      debugDiv.innerHTML += '<br>Attempting to load main.tsx...';
-      
-      // Enhanced module support detection
-      setTimeout(() => {
-        debugDiv.innerHTML += '<br>Module import support: ' + (typeof import !== 'undefined' ? 'YES' : 'NO');
-        debugDiv.innerHTML += '<br>ES6 support: ' + (typeof Symbol !== 'undefined' ? 'YES' : 'NO');
-        debugDiv.innerHTML += '<br>Browser: ' + navigator.userAgent.split(' ')[0];
-      }, 1000);
-      
-      // Test if main JS loads
-      setTimeout(() => {
-        if (!window.React) {
-          debugDiv.innerHTML += '<br>❌ React not loaded - JS file issue';
-        } else {
-          debugDiv.innerHTML += '<br>✅ React loaded successfully!';
-        }
-      }, 5000);
-      
-      // Module error detection
-      window.addEventListener('unhandledrejection', (e) => {
-        debugDiv.innerHTML += '<br>🚨 Promise rejection: ' + e.reason;
-        console.error('Unhandled promise rejection:', e);
-      });
+      // Minimal error monitoring for CI/CD
+      if (process.env.NODE_ENV === 'production') {
+        window.addEventListener('error', (e) => {
+          console.error('Global error:', e.message, 'at', e.filename + ':' + e.lineno);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+          console.error('Unhandled promise rejection:', e.reason);
+        });
+      }
     </script>
     
     <script type="module" src="/src/main.tsx"></script>

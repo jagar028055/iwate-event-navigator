@@ -39,12 +39,27 @@ jobs:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps chromium
+      run: |
+        npx playwright install --with-deps chromium
+        # Verify installation
+        npx playwright --version
       
     - name: Start preview server
       run: |
         npm run preview &
-        sleep 10
+        echo "Waiting for server to start..."
+        sleep 30
+        
+        # Health check to ensure server is ready
+        for i in {1..10}; do
+          if curl -f http://localhost:4173 >/dev/null 2>&1; then
+            echo "Server is ready!"
+            break
+          else
+            echo "Attempt $i: Server not ready, waiting..."
+            sleep 5
+          fi
+        done
         
     - name: Run Playwright tests
       run: npm run test
