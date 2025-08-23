@@ -32,6 +32,18 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
+    - name: Check Environment Variables
+      run: |
+        echo "Checking environment variables..."
+        echo "GEMINI_API_KEY exists: ${{ secrets.GEMINI_API_KEY != '' }}"
+        if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+          echo "GEMINI_API_KEY is set (length: ${#GEMINI_API_KEY})"
+        else
+          echo "❌ GEMINI_API_KEY is not set!"
+        fi
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        
     - name: Build
       run: npm run build
       env:
@@ -72,6 +84,8 @@ jobs:
       run: npm run build
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        # Use a test API key for CI if main key is not available
+        VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'TEST_KEY_FOR_CI' }}
         
     - name: Start preview server
       run: |

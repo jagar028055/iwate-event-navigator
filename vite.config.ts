@@ -31,8 +31,14 @@ export default defineConfig(({ mode }) => {
         // ブラウザ環境でのprocess.envアクセスを安全に処理
         'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
         'process.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKey),
-        // Node.js環境変数の存在チェックを安全に処理（global置換）
-        'process': 'undefined'
+        // Node.js環境変数の存在チェックを安全に処理
+        'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development'),
+        // Define global for browser environment
+        'global': 'globalThis',
+        // Window object API key for browser access
+        'window.__GEMINI_API_KEY__': JSON.stringify(geminiApiKey),
+        // CI flag for testing
+        'window.__CI__': JSON.stringify(process.env.CI || 'false')
       },
       resolve: {
         alias: {

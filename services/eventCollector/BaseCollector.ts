@@ -33,9 +33,8 @@ export abstract class BaseCollector implements IEventCollector {
       import.meta?.env?.GEMINI_API_KEY,
       import.meta?.env?.VITE_GEMINI_API_KEY,
       
-      // Viteのdefineで置換される値
-      process?.env?.GEMINI_API_KEY,
-      process?.env?.VITE_GEMINI_API_KEY
+      // ブラウザ環境でのprocessアクセスを安全に処理
+      (typeof window !== 'undefined' && (window as any).__GEMINI_API_KEY__) || undefined
     ];
     
     const apiKey = sources.find(key => 
@@ -52,7 +51,7 @@ export abstract class BaseCollector implements IEventCollector {
       console.error("BaseCollector: Available sources check:", {
         '__GEMINI_API_KEY__': typeof __GEMINI_API_KEY__ !== 'undefined' ? 'SET' : 'NOT_SET',
         'import.meta.env': import.meta?.env ? 'AVAILABLE' : 'NOT_AVAILABLE',
-        'process.env': process?.env ? 'AVAILABLE' : 'NOT_AVAILABLE'
+        'window.__GEMINI_API_KEY__': typeof window !== 'undefined' && (window as any).__GEMINI_API_KEY__ ? 'SET' : 'NOT_SET'
       });
       throw new Error("Gemini API key is not configured for BaseCollector");
     }

@@ -33,10 +33,23 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
+    - name: Check Environment Variables
+      run: |
+        echo "Checking environment variables for preview..."
+        echo "GEMINI_API_KEY exists: ${{ secrets.GEMINI_API_KEY != '' }}"
+        if [ -n "${{ secrets.GEMINI_API_KEY }}" ]; then
+          echo "GEMINI_API_KEY is set for preview"
+        else
+          echo "⚠️ GEMINI_API_KEY is not set for preview, using test key"
+        fi
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        
     - name: Build
       run: npm run build
       env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'TEST_KEY_FOR_PREVIEW' }}
+        VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'TEST_KEY_FOR_PREVIEW' }}
         
     - name: Install Playwright Browsers
       run: |

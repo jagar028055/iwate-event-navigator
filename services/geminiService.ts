@@ -5,7 +5,8 @@ import { callGeminiAPI, cleanJsonString } from './geminiApiClient';
 // デバッグ用: 環境変数の状況を確認
 console.log('Environment variables debug:', {
   GEMINI_API_KEY: import.meta.env.GEMINI_API_KEY ? 'SET' : 'NOT SET',
-  process_env_GEMINI_API_KEY: process.env.GEMINI_API_KEY ? 'SET' : 'NOT SET',
+  VITE_GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY ? 'SET' : 'NOT SET',
+  __GEMINI_API_KEY__: typeof window !== 'undefined' && (window as any).__GEMINI_API_KEY__ ? 'SET' : 'NOT SET',
   mode: import.meta.env.MODE,
   prod: import.meta.env.PROD
 });

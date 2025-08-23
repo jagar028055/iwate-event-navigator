@@ -18,9 +18,8 @@ class AIService {
     
     const apiKey = __GEMINI_API_KEY__ || 
                    import.meta.env.GEMINI_API_KEY || 
-                   import.meta.env.VITE_GEMINI_API_KEY ||
-                   process.env.GEMINI_API_KEY ||
-                   process.env.VITE_GEMINI_API_KEY;
+                   import.meta.env.VITE_GEMINI_API_KEY ||  
+                   (typeof window !== 'undefined' ? window.__GEMINI_API_KEY__ : undefined);
                    
     if (!apiKey) {
       console.error("AIService: API key not found in any source");

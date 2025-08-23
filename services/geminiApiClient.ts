@@ -14,9 +14,8 @@ function getApiKey(): string {
     import.meta?.env?.GEMINI_API_KEY,
     import.meta?.env?.VITE_GEMINI_API_KEY,
     
-    // Viteのdefineで置換される値
-    process?.env?.GEMINI_API_KEY,
-    process?.env?.VITE_GEMINI_API_KEY,
+    // ブラウザ環境でのprocessアクセスを安全に処理
+    (typeof window !== 'undefined' && (window as any).__GEMINI_API_KEY__) || undefined,
     
     // 開発時のフォールバック（window.env経由）
     typeof window !== 'undefined' && (window as any).env ? (window as any).env.GEMINI_API_KEY : undefined
@@ -37,7 +36,7 @@ function getApiKey(): string {
     console.error("Available sources check:", {
       '__GEMINI_API_KEY__': typeof __GEMINI_API_KEY__ !== 'undefined' ? 'SET' : 'NOT_SET',
       'import.meta.env': import.meta?.env ? 'AVAILABLE' : 'NOT_AVAILABLE',
-      'process.env': process?.env ? 'AVAILABLE' : 'NOT_AVAILABLE',
+      'window.__GEMINI_API_KEY__': typeof window !== 'undefined' && (window as any).__GEMINI_API_KEY__ ? 'SET' : 'NOT_SET',
       'window.env': typeof window !== 'undefined' && (window as any).env ? 'AVAILABLE' : 'NOT_AVAILABLE'
     });
     throw new Error("Gemini API key is not configured. Please set GEMINI_API_KEY in your environment.");

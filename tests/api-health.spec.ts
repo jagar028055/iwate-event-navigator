@@ -4,9 +4,15 @@ test.describe('API健全性チェック', () => {
   
   test('Gemini API接続テスト', async ({ page }) => {
     // テスト用のAPIキーが設定されているかチェック
-    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    // ブラウザ環境でのアクセスに変更
+    await page.goto('/');
+    const hasApiKey = await page.evaluate(() => {
+      return !!(window as any).__GEMINI_API_KEY__ || 
+             !!(import.meta as any)?.env?.GEMINI_API_KEY || 
+             !!(import.meta as any)?.env?.VITE_GEMINI_API_KEY;
+    });
     
-    if (!apiKey) {
+    if (!hasApiKey) {
       test.skip('API key not configured for testing');
     }
     
