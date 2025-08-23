@@ -91,30 +91,28 @@ function App() {
           </div>
         )}
 
-        {!isLoading && !error && (
-          <>
-            <Sidebar 
-              events={filteredEvents} 
-              sources={sources}
-              onSelectEvent={handleSelectEvent}
-              selectedEvent={selectedEvent}
-              categories={categories}
-              activeCategory={activeCategory}
-              onSelectCategory={setActiveCategory}
-              areas={IWATE_AREA_KEYS}
-              activeArea={activeArea}
-              onSelectArea={setActiveArea}
-              dateFilters={DATE_FILTERS}
-              activeDateFilter={activeDateFilter}
-              onSelectDateFilter={setActiveDateFilter}
-            />
-            <MapPanel 
-              events={filteredEvents}
-              onSelectEvent={handleSelectEvent}
-              selectedEvent={selectedEvent}
-            />
-          </>
-        )}
+        <>
+          <Sidebar 
+            events={isLoading ? [] : filteredEvents} 
+            sources={sources}
+            onSelectEvent={handleSelectEvent}
+            selectedEvent={selectedEvent}
+            categories={categories}
+            activeCategory={activeCategory}
+            onSelectCategory={setActiveCategory}
+            areas={IWATE_AREA_KEYS}
+            activeArea={activeArea}
+            onSelectArea={setActiveArea}
+            dateFilters={DATE_FILTERS}
+            activeDateFilter={activeDateFilter}
+            onSelectDateFilter={setActiveDateFilter}
+          />
+          <MapPanel 
+            events={isLoading ? [] : filteredEvents}
+            onSelectEvent={handleSelectEvent}
+            selectedEvent={selectedEvent}
+          />
+        </>
       </main>
 
       {selectedEvent && (
