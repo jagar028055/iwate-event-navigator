@@ -104,10 +104,11 @@ export class CollectorManager {
 
         } catch (error) {
           console.error(`Error in stage ${stage}:`, error);
+          const errorMessage = error instanceof Error ? error.message : String(error);
           allErrors.push({
             severity: 'major',
             source: collector.name,
-            message: error.message,
+            message: errorMessage,
             timestamp: new Date(),
             retryable: true
           });
@@ -151,7 +152,8 @@ export class CollectorManager {
 
     } catch (error) {
       console.error('Collection manager execution failed:', error);
-      throw new Error(`Collection failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Collection failed: ${errorMessage}`);
     }
   }
 

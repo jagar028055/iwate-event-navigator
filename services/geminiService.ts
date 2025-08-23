@@ -57,7 +57,7 @@ export const fetchIwateEvents = async (): Promise<{ events: EventInfo[], sources
       },
     });
 
-    const jsonText = cleanJsonString(response.text);
+    const jsonText = cleanJsonString(response.text || '');
     if (!jsonText) {
       throw new Error("API returned an empty response.");
     }

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MapPanel } from './components/MapPanel';
 import { EventDetailModal } from './components/EventDetailModal';
@@ -8,6 +8,7 @@ import { useAppStore } from './store/appStore';
 import { useEventFilters } from './hooks/useEventFilters';
 import { useEventLoader } from './hooks/useEventLoader';
 import { DATE_FILTERS, IWATE_AREA_KEYS } from './constants';
+import type { EventInfo } from './types';
 
 
 function App() {

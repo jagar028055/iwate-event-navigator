@@ -84,7 +84,8 @@ const defaultPreferences: UserPreferences = {
     enabled: false,
     eventReminder: false,
     newRecommendation: false,
-    weatherAlert: false
+    weatherAlert: false,
+    locationBased: false
   },
   accessibility: {
     highContrast: false,
@@ -102,7 +103,7 @@ const defaultPreferences: UserPreferences = {
 export const useAppStore = create<AppStore>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set, _get) => ({
         // Initial UI State
         loading: false,
         error: null,

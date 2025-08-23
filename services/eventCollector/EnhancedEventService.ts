@@ -64,7 +64,7 @@ export class EnhancedEventService {
           latitude: e.latitude,
           longitude: e.longitude,
           category: e.category,
-          officialUrl: e.officialUrl
+          officialUrl: e.officialUrl || ''
         })),
         sources: [] // Sources can be retrieved separately if needed
       };
@@ -113,7 +113,7 @@ export class EnhancedEventService {
           latitude: e.latitude,
           longitude: e.longitude,
           category: e.category,
-          officialUrl: e.officialUrl
+          officialUrl: e.officialUrl || ''
         })),
         sources: result.allSources
       };

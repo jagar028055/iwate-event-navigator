@@ -215,8 +215,8 @@ export class PerformanceMonitor {
           
           const metrics = {
             domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
-            domComplete: navigation.domComplete - navigation.navigationStart,
-            loadComplete: navigation.loadEventEnd - navigation.navigationStart,
+            domComplete: navigation.domComplete - navigation.startTime,
+            loadComplete: navigation.loadEventEnd - navigation.startTime,
             firstPaint: 0,
             firstContentfulPaint: 0,
           };

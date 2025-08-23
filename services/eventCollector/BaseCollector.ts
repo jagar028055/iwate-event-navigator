@@ -86,7 +86,8 @@ export abstract class BaseCollector implements IEventCollector {
       return response.text || '';
     } catch (error) {
       console.error(`Gemini API request failed in ${this.name}:`, error);
-      throw new Error(`AI service temporarily unavailable: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`AI service temporarily unavailable: ${errorMessage}`);
     }
   }
 
@@ -111,7 +112,8 @@ export abstract class BaseCollector implements IEventCollector {
       };
     } catch (error) {
       console.error(`JSON parsing failed in ${this.name}:`, error);
-      throw new Error(`Failed to parse collection response: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse collection response: ${errorMessage}`);
     }
   }
 

@@ -13,7 +13,7 @@ interface QueuedJob {
 interface WorkerInfo {
   id: string;
   isIdle: boolean;
-  currentJob?: QueuedJob;
+  currentJob: QueuedJob | undefined;
   totalJobsProcessed: number;
   startTime: Date;
 }
@@ -42,6 +42,7 @@ export class JobQueue {
       const worker: WorkerInfo = {
         id: `worker-${i + 1}`,
         isIdle: true,
+        currentJob: undefined,
         totalJobsProcessed: 0,
         startTime: new Date()
       };
@@ -198,13 +199,7 @@ export class JobQueue {
     return this.queue.length;
   }
 
-  public getQueueStatus(): {
-    queueLength: number;
-    activeWorkers: number;
-    idleWorkers: number;
-    statistics: typeof this.statistics;
-    workers: WorkerInfo[];
-  } {
+  public getQueueStatus() {
     const activeWorkers = this.workers.filter(w => !w.isIdle).length;
     const idleWorkers = this.workers.filter(w => w.isIdle).length;
 

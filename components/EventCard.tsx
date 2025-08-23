@@ -26,7 +26,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onSelect, isSelecte
   return (
     <div className={cardClasses} onClick={() => onSelect(event)}>
       <div className="flex justify-between items-start mb-2">
-        <h3 className="font-bold text-slate-800 truncate pr-2 flex-1">{event.name}</h3>
+        <h3 className="font-bold text-slate-800 truncate pr-2 flex-1">{event.title}</h3>
         {event.category && <CategoryBadge category={event.category} />}
       </div>
       <p className="text-sm text-slate-600">{event.locationName}</p>

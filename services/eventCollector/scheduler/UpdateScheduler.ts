@@ -203,7 +203,7 @@ export class UpdateScheduler {
         endTime: new Date(),
         duration: Date.now() - startTime.getTime(),
         errorCount: 1,
-        errors: [error.message]
+        errors: [error instanceof Error ? error.message : String(error)]
       };
 
       // Handle retry logic
@@ -318,7 +318,8 @@ export class UpdateScheduler {
       };
 
     } catch (error) {
-      throw new Error(`Maintenance job failed after ${tasksCompleted} tasks: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Maintenance job failed after ${tasksCompleted} tasks: ${errorMessage}`);
     }
   }
 

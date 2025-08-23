@@ -127,7 +127,7 @@ export class MunicipalityCollector extends BaseCollector {
     return '';
   }
 
-  private buildMunicipalityPrompt(municipality: any): string {
+  private buildMunicipalityPrompt(municipality: { name: string; specialEvents: string[]; majorAttractions: string[]; population?: number; region?: string; officialUrl?: string }): string {
     const specialEventsHints = municipality.specialEvents.length > 0 
       ? `\n特に以下の名物イベントを重点的に探してください：\n${municipality.specialEvents.map(e => `- ${e}`).join('\n')}`
       : '';

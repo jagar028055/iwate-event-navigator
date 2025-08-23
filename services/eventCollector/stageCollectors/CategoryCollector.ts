@@ -65,7 +65,7 @@ export class CategoryCollector extends BaseCollector {
             latitude: e.latitude,
             longitude: e.longitude,
             category: e.category,
-            officialUrl: e.officialUrl
+            officialUrl: e.officialUrl || ''
           })));
           
           allSources.push(...categoryResult.sources);

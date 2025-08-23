@@ -42,7 +42,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClo
       >
         <div className="p-6 border-b border-slate-200">
            <div className="flex justify-between items-start">
-              <h2 id="event-title" className="text-2xl font-bold text-teal-800 pr-10">{event.name}</h2>
+              <h2 id="event-title" className="text-2xl font-bold text-teal-800 pr-10">{event.title}</h2>
               {event.category && (
                 <span className="flex-shrink-0 bg-teal-100 text-teal-800 text-sm font-semibold px-3 py-1 rounded-full">{event.category}</span>
               )}

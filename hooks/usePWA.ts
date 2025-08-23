@@ -144,9 +144,13 @@ export const usePWA = () => {
       await state.swRegistration.showNotification(title, {
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-72.png',
-        vibrate: [200, 100, 200],
         ...options,
       });
+      
+      // Trigger vibration separately if supported
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
       return true;
     } catch (error) {
       console.error('Show notification failed:', error);
@@ -176,7 +180,7 @@ export const usePWA = () => {
     }
 
     try {
-      await state.swRegistration.sync.register(tag);
+      await (state.swRegistration as any).sync.register(tag);
       return true;
     } catch (error) {
       console.error('Background sync registration failed:', error);

@@ -60,8 +60,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       // Error states
       {
         'border-red-500 focus:ring-red-500 focus:border-red-500': hasError && variant === 'default',
-        'border-red-500 focus:border-red-500': hasError && variant === 'filled',
-        'border-red-500 focus:border-red-500': hasError && variant === 'outlined',
+        'border-red-500 focus:border-red-500': hasError && (variant === 'filled' || variant === 'outlined'),
       },
       
       // Disabled state
