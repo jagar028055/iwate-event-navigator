@@ -20,21 +20,23 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
   const leafletRef = useRef<LeafletModule | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [isLoadingLeaflet, setIsLoadingLeaflet] = useState(false);
+  const [isLoadingLeaflet, setIsLoadingLeaflet] = useState(true);
 
   // Initialize map on first render with proper cleanup
   useEffect(() => {
-    let map: L.Map | null = null;
+    let map: LeafletMap | null = null;
     let timeoutId: NodeJS.Timeout;
     
     const initializeMap = async () => {
       try {
+        console.log('Starting map initialization...');
         // Wait for container to be ready
         if (!containerRef.current) {
           console.warn('Map container not ready, retrying...');
           timeoutId = setTimeout(initializeMap, 100);
           return;
         }
+        console.log('Map container is ready');
         
         // Check if map is already initialized (React StrictMode protection)
         if (mapRef.current) {
@@ -49,10 +51,22 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
           setIsLoadingLeaflet(true);
           
           const [L, markerIcon, markerIconRetina, markerShadow] = await Promise.all([
-            import('leaflet'),
-            import('leaflet/dist/images/marker-icon.png'),
-            import('leaflet/dist/images/marker-icon-2x.png'),
-            import('leaflet/dist/images/marker-shadow.png')
+            import('leaflet').catch(err => {
+              console.error('Failed to import leaflet:', err);
+              throw err;
+            }),
+            import('leaflet/dist/images/marker-icon.png').catch(err => {
+              console.error('Failed to import marker-icon:', err);
+              throw err;
+            }),
+            import('leaflet/dist/images/marker-icon-2x.png').catch(err => {
+              console.error('Failed to import marker-icon-2x:', err);
+              throw err;
+            }),
+            import('leaflet/dist/images/marker-shadow.png').catch(err => {
+              console.error('Failed to import marker-shadow:', err);
+              throw err;
+            })
           ]);
           
           // Configure Leaflet icons
@@ -92,6 +106,7 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
         
         mapRef.current = map;
         setIsMapReady(true);
+        setIsLoadingLeaflet(false);
         setMapError(null);
         
         console.log('Leaflet map initialized successfully');
@@ -193,13 +208,11 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
   
   return (
     <section className="flex-grow bg-slate-200 relative">
-      {(!isMapReady || isLoadingLeaflet) && (
+      {(!isMapReady && isLoadingLeaflet) && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-4"></div>
-            <p className="text-slate-600">
-              {isLoadingLeaflet ? '地図ライブラリを読み込み中...' : '地図を読み込み中...'}
-            </p>
+            <p className="text-slate-600">地図を読み込み中...</p>
           </div>
         </div>
       )}

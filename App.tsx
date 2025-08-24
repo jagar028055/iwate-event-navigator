@@ -78,13 +78,25 @@ function App() {
           </div>
         )}
 
-        {error && (
+        {error && !events.length && (
            <div className="absolute inset-0 bg-red-100 flex flex-col justify-center items-center z-40 p-4">
-            <p className="text-red-700 text-xl font-semibold">エラーが発生しました</p>
-            <p className="text-red-600 mt-2">{error}</p>
+            <p className="text-red-700 text-xl font-semibold">イベントデータの読み込みに失敗しました</p>
+            <p className="text-red-600 mt-2 text-sm">地図は表示されますが、イベント情報が取得できませんでした</p>
             <button
               onClick={handleLoadEvents}
               className="mt-6 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              再試行
+            </button>
+          </div>
+        )}
+
+        {error && events.length > 0 && (
+          <div className="absolute top-20 right-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded-lg shadow-lg z-30 max-w-md">
+            <p className="text-sm font-medium">一部のイベント情報が更新できませんでした</p>
+            <button
+              onClick={handleLoadEvents}
+              className="mt-1 text-xs text-yellow-600 hover:text-yellow-800 underline"
             >
               再試行
             </button>

@@ -103,8 +103,8 @@
     
     <!-- Error monitoring for CI -->
     <script>
-      // Minimal error monitoring for CI/CD
-      if (process.env.NODE_ENV === 'production') {
+      // Minimal error monitoring for CI/CD (browser-safe version)
+      if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
         window.addEventListener('error', (e) => {
           console.error('Global error:', e.message, 'at', e.filename + ':' + e.lineno);
         });
