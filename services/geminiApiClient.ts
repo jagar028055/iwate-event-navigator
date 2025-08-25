@@ -55,13 +55,33 @@ export interface GeminiApiOptions {
   useSearch?: boolean;
 }
 
+export interface GeminiResponse {
+  text: string;
+  groundingMetadata?: {
+    webSearchQueries?: string[];
+    searchEntryPoint?: {
+      renderedContent: string;
+    };
+    groundingChunks?: Array<{
+      web?: {
+        uri: string;
+        title: string;
+      };
+    }>;
+    groundingSupports?: Array<{
+      groundingChunkIndices: number[];
+      confidenceScore: number;
+    }>;
+  };
+}
+
 export async function callGeminiAPI(
   prompt: string, 
   options: GeminiApiOptions = {}
-): Promise<string> {
+): Promise<GeminiResponse> {
   const apiKey = getApiKey();
   const {
-    model = "gemini-1.5-pro",
+    model = "gemini-2.5-flash", // グラウンディング対応モデルに変更
     temperature = 0.7,
     topK = 40,
     topP = 0.95,
@@ -71,7 +91,7 @@ export async function callGeminiAPI(
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   
-  const requestBody = {
+  const requestBody: any = {
     contents: [{
       parts: [{
         text: prompt
@@ -103,6 +123,16 @@ export async function callGeminiAPI(
     ]
   };
 
+  // Google Search グラウンディングを有効にする
+  if (useSearch) {
+    requestBody.tools = [
+      {
+        google_search: {}
+      }
+    ];
+    console.log("🔍 Google Search grounding enabled");
+  }
+
   console.log(`🚀 Calling Gemini API (${model})...`);
   
   try {
@@ -124,7 +154,20 @@ export async function callGeminiAPI(
     console.log("✅ Gemini API response received");
     
     if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      return data.candidates[0].content.parts[0].text;
+      const result: GeminiResponse = {
+        text: data.candidates[0].content.parts[0].text || ''
+      };
+
+      // グラウンディングメタデータが含まれている場合は処理
+      if (data.candidates[0].groundingMetadata) {
+        result.groundingMetadata = data.candidates[0].groundingMetadata;
+        console.log("🔗 Grounding metadata found:", {
+          webSearchQueries: result.groundingMetadata?.webSearchQueries?.length || 0,
+          groundingChunks: result.groundingMetadata?.groundingChunks?.length || 0
+        });
+      }
+
+      return result;
     } else {
       console.error("❌ Invalid API response structure:", data);
       throw new Error("Invalid response structure from Gemini API");
@@ -133,6 +176,15 @@ export async function callGeminiAPI(
     console.error("❌ Gemini API call failed:", error);
     throw error;
   }
+}
+
+// 下位互換性のための関数（既存のstring戻り値を期待するコードのため）
+export async function callGeminiAPILegacy(
+  prompt: string, 
+  options: GeminiApiOptions = {}
+): Promise<string> {
+  const result = await callGeminiAPI(prompt, options);
+  return result.text;
 }
 
 export function cleanJsonString(str: string): string {

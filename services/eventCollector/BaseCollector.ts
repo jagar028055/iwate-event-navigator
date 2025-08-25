@@ -10,7 +10,7 @@ import {
   DataFreshness
 } from './types';
 import { EventInfo, Source } from '../../types';
-import { callGeminiAPI, cleanJsonString } from '../geminiApiClient';
+import { callGeminiAPILegacy as callGeminiAPI, cleanJsonString } from '../geminiApiClient';
 
 export abstract class BaseCollector implements IEventCollector {
   protected apiKey: string;
@@ -47,7 +47,9 @@ export abstract class BaseCollector implements IEventCollector {
     );
                    
     if (!apiKey) {
-      console.error("BaseCollector: API key not found in any source");
+      console.error("❌ BaseCollector: API key not found in any source");
+      console.error("Available sources:", sources);
+      console.error("To fix this, set GEMINI_API_KEY in your environment variables.");
       console.error("BaseCollector: Available sources check:", {
         '__GEMINI_API_KEY__': typeof __GEMINI_API_KEY__ !== 'undefined' ? 'SET' : 'NOT_SET',
         'import.meta.env': import.meta?.env ? 'AVAILABLE' : 'NOT_AVAILABLE',
