@@ -130,7 +130,7 @@ export async function callGeminiAPI(
         google_search: {}
       }
     ];
-    console.log("🔍 Google Search grounding enabled");
+    console.log("🔍 Google Search grounding enabled (google_search)");
   }
 
   console.log(`🚀 Calling Gemini API (${model})...`);
