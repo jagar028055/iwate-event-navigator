@@ -127,10 +127,15 @@ export async function callGeminiAPI(
   if (useSearch) {
     requestBody.tools = [
       {
-        google_search: {}
+        google_search_retrieval: {
+          dynamic_retrieval_config: {
+            mode: "MODE_DYNAMIC",
+            dynamic_threshold: 0.7
+          }
+        }
       }
     ];
-    console.log("🔍 Google Search grounding enabled (google_search)");
+    console.log("🔍 Google Search grounding enabled (google_search_retrieval)");
   }
 
   console.log(`🚀 Calling Gemini API (${model})...`);
