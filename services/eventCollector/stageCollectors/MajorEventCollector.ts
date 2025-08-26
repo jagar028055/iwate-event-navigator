@@ -110,8 +110,20 @@ export class MajorEventCollector extends BaseCollector {
   }
 
   protected buildCollectionPrompt(sources: InformationSource[]): string {
+    // 現在の日時情報を取得
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const currentDate = now.toLocaleDateString('ja-JP');
+    const nextYear = currentYear + 1;
+    
     // Google Searchグラウンディング用に最適化されたプロンプト
-    return `岩手県で開催される最新のイベント情報を検索して収集してください。
+    return `今日は${currentDate}です。岩手県で今後1年間（${currentYear}年${currentMonth}月から${nextYear}年${currentMonth}月まで）に開催される最新のイベント情報を検索して収集してください。
+
+【重要な日時情報】
+- 今日の日付：${currentDate}
+- 検索対象期間：${currentYear}年${currentMonth}月〜${nextYear}年${currentMonth}月
+- 過去のイベント（${currentYear}年${currentMonth}月より前）は含めないでください
 
 【検索対象】
 岩手県内で開催される以下のようなイベントを検索してください：
@@ -130,7 +142,7 @@ export class MajorEventCollector extends BaseCollector {
 
 **検索条件：**
 - 開催地：岩手県内
-- 開催期間：今日から1年以内
+- 開催期間：${currentYear}年${currentMonth}月〜${nextYear}年${currentMonth}月（未来のイベントのみ）
 - 規模：一般参加可能なイベント
 - 種類：祭り、文化、グルメ、自然、スポーツ、観光など
 
@@ -151,14 +163,15 @@ export class MajorEventCollector extends BaseCollector {
 |----------|------|--------|----------|------|------|----------|---------|
 
 **重要な指示：**
-- 実際にウェブ検索を行い、最新の情報を取得してください
+- 実際にウェブ検索を行い、${currentYear}年${currentMonth}月以降の最新情報を取得してください
+- 過去のイベント（${currentYear}年${currentMonth}月より前）は絶対に含めないでください
 - 緯度・経度は岩手県内の正確な座標（緯度38.9-40.3、経度140.7-142.1）
 - 開催日はYYYY-MM-DD形式
 - 実在しない架空のイベントは含めないでください
 - 最低10件、最大30件のイベントを収集してください
 - 各行はパイプ（|）で区切り、改行文字は含めない
 
-検索して実際に見つかったイベント情報のみを表形式で出力してください。`;
+検索して実際に見つかった${currentYear}年${currentMonth}月以降のイベント情報のみを表形式で出力してください。`;
   }
 
   public estimateExecutionTime(): number {
