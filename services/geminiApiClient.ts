@@ -134,6 +134,18 @@ export async function callGeminiAPI(
   }
 
   console.log(`🚀 Calling Gemini API (${model})...`);
+  console.log("📋 Request details:", {
+    url: url.replace(apiKey, '[API_KEY_HIDDEN]'),
+    method: 'POST',
+    useSearch: useSearch,
+    model: model,
+    temperature: temperature,
+    maxOutputTokens: maxOutputTokens,
+    tools: requestBody.tools ? 'YES' : 'NO',
+    toolsDetail: requestBody.tools,
+    promptLength: prompt.length,
+    environment: typeof window !== 'undefined' ? 'BROWSER' : 'NODE'
+  });
   
   try {
     const response = await fetch(url, {
@@ -143,6 +155,8 @@ export async function callGeminiAPI(
       },
       body: JSON.stringify(requestBody)
     });
+
+    console.log("🌐 Response status:", response.status, response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -166,19 +180,38 @@ export async function callGeminiAPI(
       throw new Error("First candidate is null in response");
     }
 
-    if (!candidate.content || !candidate.content.parts || !Array.isArray(candidate.content.parts) || candidate.content.parts.length === 0) {
-      console.error("❌ Invalid content structure:", candidate);
-      throw new Error("Invalid content structure in candidate");
-    }
-
-    const textPart = candidate.content.parts[0];
-    if (!textPart || typeof textPart.text !== 'string') {
-      console.error("❌ Invalid text part:", textPart);
-      throw new Error("Invalid text part in content");
+    // グラウンディング使用時は異なる構造になる場合がある
+    let text = '';
+    
+    if (candidate.content && candidate.content.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
+      // 通常のレスポンス構造
+      const textPart = candidate.content.parts[0];
+      if (textPart && typeof textPart.text === 'string') {
+        text = textPart.text;
+      } else {
+        console.error("❌ Invalid text part:", textPart);
+        throw new Error("Invalid text part in content");
+      }
+    } else if (candidate.content && typeof candidate.content.text === 'string') {
+      // 直接textフィールドがある場合
+      text = candidate.content.text;
+    } else {
+      // グラウンディング使用時は別のフィールドを確認
+      console.log("🔍 Checking alternative response structures...");
+      
+      // groundingMetadataにコンテンツがある場合を確認
+      if (candidate.groundingMetadata && candidate.groundingMetadata.searchEntryPoint && 
+          candidate.groundingMetadata.searchEntryPoint.renderedContent) {
+        console.log("📝 Using grounding metadata content");
+        text = "検索結果が取得されましたが、テキスト形式での抽出ができませんでした。グラウンディング機能は動作していますが、データ解析に改善が必要です。";
+      } else {
+        console.error("❌ No valid text content found:", candidate);
+        throw new Error("No valid text content found in candidate");
+      }
     }
 
     const result: GeminiResponse = {
-      text: textPart.text
+      text: text
     };
 
     // グラウンディングメタデータが含まれている場合は処理
