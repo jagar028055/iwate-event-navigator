@@ -123,19 +123,11 @@ export async function callGeminiAPI(
     ]
   };
 
-  // Google Search グラウンディングを有効にする
+  // Google Search グラウンディングを有効にする（現在のAPIキーではサポートされていません）
   if (useSearch) {
-    requestBody.tools = [
-      {
-        google_search_retrieval: {
-          dynamic_retrieval_config: {
-            mode: "MODE_DYNAMIC",
-            dynamic_threshold: 0.7
-          }
-        }
-      }
-    ];
-    console.log("🔍 Google Search grounding enabled (google_search_retrieval)");
+    console.log("⚠️ Google Search grounding requested but not supported by current API key");
+    console.log("🔧 Using standard Gemini API without grounding");
+    // グラウンディングツールは追加せず、標準のGemini APIを使用
   }
 
   console.log(`🚀 Calling Gemini API (${model})...`);
