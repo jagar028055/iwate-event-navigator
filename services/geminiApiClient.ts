@@ -123,11 +123,14 @@ export async function callGeminiAPI(
     ]
   };
 
-  // Google Search グラウンディングを有効にする（現在のAPIキーではサポートされていません）
+  // Google Search グラウンディングを有効にする
   if (useSearch) {
-    console.log("⚠️ Google Search grounding requested but not supported by current API key");
-    console.log("🔧 Using standard Gemini API without grounding");
-    // グラウンディングツールは追加せず、標準のGemini APIを使用
+    requestBody.tools = [
+      {
+        google_search: {}
+      }
+    ];
+    console.log("🔍 Google Search grounding enabled (google_search)");
   }
 
   console.log(`🚀 Calling Gemini API (${model})...`);
@@ -149,26 +152,45 @@ export async function callGeminiAPI(
 
     const data = await response.json();
     console.log("✅ Gemini API response received");
+    console.log("🔍 Response structure:", JSON.stringify(data, null, 2).substring(0, 500));
     
-    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      const result: GeminiResponse = {
-        text: data.candidates[0].content.parts[0].text || ''
-      };
-
-      // グラウンディングメタデータが含まれている場合は処理
-      if (data.candidates[0].groundingMetadata) {
-        result.groundingMetadata = data.candidates[0].groundingMetadata;
-        console.log("🔗 Grounding metadata found:", {
-          webSearchQueries: result.groundingMetadata?.webSearchQueries?.length || 0,
-          groundingChunks: result.groundingMetadata?.groundingChunks?.length || 0
-        });
-      }
-
-      return result;
-    } else {
-      console.error("❌ Invalid API response structure:", data);
-      throw new Error("Invalid response structure from Gemini API");
+    // より堅牢なレスポンス構造チェック
+    if (!data.candidates || !Array.isArray(data.candidates) || data.candidates.length === 0) {
+      console.error("❌ No candidates in response:", data);
+      throw new Error("No candidates found in Gemini API response");
     }
+
+    const candidate = data.candidates[0];
+    if (!candidate) {
+      console.error("❌ First candidate is null/undefined");
+      throw new Error("First candidate is null in response");
+    }
+
+    if (!candidate.content || !candidate.content.parts || !Array.isArray(candidate.content.parts) || candidate.content.parts.length === 0) {
+      console.error("❌ Invalid content structure:", candidate);
+      throw new Error("Invalid content structure in candidate");
+    }
+
+    const textPart = candidate.content.parts[0];
+    if (!textPart || typeof textPart.text !== 'string') {
+      console.error("❌ Invalid text part:", textPart);
+      throw new Error("Invalid text part in content");
+    }
+
+    const result: GeminiResponse = {
+      text: textPart.text
+    };
+
+    // グラウンディングメタデータが含まれている場合は処理
+    if (candidate.groundingMetadata) {
+      result.groundingMetadata = candidate.groundingMetadata;
+      console.log("🔗 Grounding metadata found:", {
+        webSearchQueries: result.groundingMetadata?.webSearchQueries?.length || 0,
+        groundingChunks: result.groundingMetadata?.groundingChunks?.length || 0
+      });
+    }
+
+    return result;
   } catch (error) {
     console.error("❌ Gemini API call failed:", error);
     throw error;
