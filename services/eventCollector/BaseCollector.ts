@@ -14,7 +14,7 @@ import { callGeminiAPILegacy as callGeminiAPI, cleanJsonString } from '../gemini
 
 export abstract class BaseCollector implements IEventCollector {
   protected apiKey: string;
-  protected model: string = "gemini-2.5-flash"; // Gemini 2.0+ でgoogle_search対応
+  protected model: string = "gemini-2.5-flash-lite"; // Gemini 2.5 Flash-Lite（検索グラウンディング対応）
   
   public abstract readonly stage: CollectionStage;
   public abstract readonly name: string;

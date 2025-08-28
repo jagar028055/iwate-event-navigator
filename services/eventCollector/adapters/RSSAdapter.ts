@@ -395,9 +395,21 @@ export class RSSAdapter implements ISourceAdapter {
   }
 
   private generateEventId(title: string, date: Date): string {
-    const cleanTitle = title.replace(/[^\w]/g, '').substring(0, 20);
+    const cleanTitle = title.replace(/[^\w]/g, '').substring(0, 15);
     const timestamp = date.getTime();
-    return `${cleanTitle}_${timestamp}`;
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const hash = this.generateSimpleHash(title + date.toISOString());
+    return `${cleanTitle}_${timestamp}_${hash}_${randomSuffix}`;
+  }
+
+  private generateSimpleHash(input: string): string {
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+      const char = input.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(36).substring(0, 6);
   }
 
   private getRegionCity(region: string): string {

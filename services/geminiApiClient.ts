@@ -81,7 +81,7 @@ export async function callGeminiAPI(
 ): Promise<GeminiResponse> {
   const apiKey = getApiKey();
   const {
-    model = "gemini-2.5-flash", // Gemini 2.0+ でgoogle_search対応
+    model = "gemini-2.5-flash-lite", // Gemini 2.5 Flash-Lite（google_search対応）
     temperature = 0.7,
     topK = 40,
     topP = 0.95,

@@ -40,7 +40,8 @@ function App() {
   };
 
   useEffect(() => {
-    handleLoadEvents();
+    // Temporarily disable auto-loading to prevent infinite loop
+    // handleLoadEvents();
     
     // Add global test function for development
     if (typeof window !== 'undefined') {
@@ -69,6 +70,27 @@ function App() {
         const stats = hybridETLService.getStatistics();
         console.log('📊 Hybrid ETL Statistics:', stats);
         return stats;
+      };
+
+      (window as any).testSimple = async () => {
+        console.log('🔬 Simple HTTP test...');
+        try {
+          const { httpClient } = await import('./services/httpClient');
+          const response = await httpClient.fetch('https://www.pref.iwate.jp/news.rss');
+          const text = await response.text();
+          console.log('✅ HTTP test successful');
+          console.log('Response length:', text.length);
+          console.log('Is mock data?', response.headers.get('X-Mock-Data') === 'true');
+          return { success: true, length: text.length, isMock: response.headers.get('X-Mock-Data') };
+        } catch (error) {
+          console.error('❌ HTTP test failed:', error);
+          return { success: false, error: error.message };
+        }
+      };
+
+      (window as any).loadManual = async () => {
+        console.log('📋 Manual load events...');
+        await handleLoadEvents();
       };
       
       console.log('🔧 Dev mode: Run window.testHybridETL() to test the system');

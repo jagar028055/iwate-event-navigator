@@ -11,7 +11,7 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "test:hybrid-etl": "node test-hybrid-etl.js",
+    "test:hybrid-etl": "tsx test-hybrid-etl.js",
     "demo:hybrid-etl": "node services/eventCollector/examples/hybridETL-example.js",
     "validate:sources": "node scripts/validate-sources.mjs"
   },
@@ -42,6 +42,7 @@
     "vite": "^6.2.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "yaml": "^2.6.0"
+    "yaml": "^2.6.0",
+    "tsx": "^4.19.2"
   }
 }

@@ -10,7 +10,7 @@ import type {
 
 class AIService {
   private apiKey: string;
-  private model: string = "gemini-1.5-pro";
+  private model: string = "gemini-2.5-flash-lite";
 
   constructor() {
     // Viteビルド時に置換される特別な変数を使用

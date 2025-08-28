@@ -1,5 +1,5 @@
 // Simple test script for Hybrid ETL system
-import { hybridETLService } from './services/hybridETLService.js';
+import { hybridETLService } from './services/hybridETLService.ts';
 
 async function testHybridETL() {
   console.log('🚀 Testing Hybrid ETL System...');
