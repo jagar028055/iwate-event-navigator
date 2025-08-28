@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL Debug</title>
+</head>
+<body>
+    <h1>ETLシステム デバッグ</h1>
+    <button onclick="debugETL()">デバッグ実行</button>
+    <pre id="output"></pre>
+
+    <script type="module">
+        import { HybridETLService, SourceRegistry } from './services/eventCollector/index.js';
+        
+        window.debugETL = async function() {
+            const output = document.getElementById('output');
+            output.textContent = '';
+            
+            const log = (msg) => {
+                console.log(msg);
+                output.textContent += msg + '\n';
+            };
+            
+            try {
+                log('🔍 Starting ETL Debug...');
+                
+                // Test RSS directly
+                const rssUrl = 'https://www.pref.iwate.jp/news.rss';
+                log(`📡 Fetching RSS: ${rssUrl}`);
+                
+                const response = await fetch(rssUrl);
+                const rssText = await response.text();
+                log(`✅ RSS fetched: ${rssText.length} chars`);
+                
+                // Parse RSS
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(rssText, 'text/xml');
+                const items = doc.querySelectorAll('item');
+                log(`📄 RSS items found: ${items.length}`);
+                
+                // Show first few items
+                for (let i = 0; i < Math.min(5, items.length); i++) {
+                    const item = items[i];
+                    const title = item.querySelector('title')?.textContent;
+                    const pubDate = item.querySelector('pubDate')?.textContent;
+                    log(`  ${i+1}. ${title} (${pubDate})`);
+                }
+                
+                // Test our adapters
+                log('\n🔧 Testing RSSAdapter...');
+                const { RSSAdapter } = await import('./services/eventCollector/adapters/RSSAdapter.js');
+                const rssAdapter = new RSSAdapter();
+                
+                const mockSource = {
+                    id: 'test_rss',
+                    name: 'Test RSS',
+                    url: rssUrl,
+                    type: 'rss_feed',
+                    searchStrategy: { method: 'rss_fetch', keywords: ['イベント', '大会', '開催'] },
+                    fetchHistory: []
+                };
+                
+                const rawData = await rssAdapter.fetch(mockSource);
+                log(`✅ RSSAdapter fetch: ${rawData.length} raw items`);
+                
+                const normalized = await rssAdapter.normalize(rawData, mockSource);
+                log(`✅ RSSAdapter normalize: ${normalized.length} events`);
+                
+                if (normalized.length > 0) {
+                    log('\n📅 Normalized events:');
+                    normalized.slice(0, 3).forEach((event, i) => {
+                        log(`  ${i+1}. ${event.title} (${event.starts_at})`);
+                    });
+                } else {
+                    log('❌ No events were normalized from RSS feed');
+                }
+                
+            } catch (error) {
+                log(`❌ Debug failed: ${error.message}`);
+                log(error.stack);
+            }
+        };
+    </script>
+</body>
+</html>

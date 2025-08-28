@@ -5,6 +5,16 @@ export * from './BaseCollector';
 export * from './CollectorManager';
 export * from './EnhancedEventService';
 
+// Hybrid ETL System (New Implementation)
+export { HybridETLService } from './HybridETLService';
+export { SourceRegistry, type SourceRegistryConfig } from './SourceRegistry';
+export { DeduplicationService, type DeduplicationConfig, type DeduplicationResult, type DuplicateGroup } from './DeduplicationService';
+
+// Hybrid Adapters
+export { ICSAdapter } from './adapters/ICSAdapter';
+export { RSSAdapter } from './adapters/RSSAdapter';
+export { HTMLAdapter } from './adapters/HTMLAdapter';
+
 // Stage Collectors
 export * from './stageCollectors/MajorEventCollector';
 export * from './stageCollectors/MunicipalityCollector';

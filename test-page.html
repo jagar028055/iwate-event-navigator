@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid ETL Test</title>
+</head>
+<body>
+    <h1>ハイブリッドETLシステム テスト</h1>
+    <button onclick="testHybridETL()">テスト実行</button>
+    <div id="output"></div>
+
+    <script type="module">
+        // Import the service
+        import { hybridETLService } from './services/hybridETLService.js';
+        
+        window.testHybridETL = async function() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<p>🚀 テスト実行中...</p>';
+            
+            try {
+                console.log('🚀 Starting hybrid ETL test...');
+                const startTime = Date.now();
+                
+                const result = await hybridETLService.fetchIwateEvents();
+                const executionTime = Date.now() - startTime;
+                
+                console.log('✅ Test completed successfully!');
+                console.log('Events:', result.events);
+                console.log('Sources:', result.sources);
+                
+                let html = `
+                    <h2>✅ テスト成功!</h2>
+                    <p><strong>実行時間:</strong> ${executionTime}ms</p>
+                    <p><strong>取得イベント数:</strong> ${result.events.length}</p>
+                    <p><strong>使用ソース数:</strong> ${result.sources.length}</p>
+                `;
+                
+                if (result.events.length > 0) {
+                    html += '<h3>📅 取得されたイベント (最初の5件):</h3><ul>';
+                    result.events.slice(0, 5).forEach(event => {
+                        html += `<li><strong>${event.title}</strong><br>
+                                 日付: ${event.date}<br>
+                                 場所: ${event.locationName}<br>
+                                 カテゴリ: ${event.category}</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                if (result.sources.length > 0) {
+                    html += '<h3>🔗 使用されたソース:</h3><ul>';
+                    result.sources.forEach(source => {
+                        html += `<li>${source.name} (${source.type})</li>`;
+                    });
+                    html += '</ul>';
+                }
+                
+                output.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Test failed:', error);
+                output.innerHTML = `
+                    <h2>❌ テスト失敗</h2>
+                    <p><strong>エラー:</strong> ${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>

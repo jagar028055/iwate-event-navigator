@@ -10,7 +10,10 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
-    "test:debug": "playwright test --debug"
+    "test:debug": "playwright test --debug",
+    "test:hybrid-etl": "node test-hybrid-etl.js",
+    "demo:hybrid-etl": "node services/eventCollector/examples/hybridETL-example.js",
+    "validate:sources": "node scripts/validate-sources.mjs"
   },
   "dependencies": {
     "@tailwindcss/forms": "^0.5.10",
@@ -27,13 +30,18 @@
     "react-dom": "^19.1.1",
     "react-leaflet": "^5.0.0",
     "tailwindcss": "^4.1.11",
+    "xml2js": "^0.6.2",
     "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",
     "@types/node": "^22.14.0",
+    "@types/xml2js": "^0.4.14",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.6.0"
   }
 }

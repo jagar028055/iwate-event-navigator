@@ -86,7 +86,11 @@ export enum SourceType {
   COMMERCIAL = 'commercial',
   COMMUNITY = 'community',
   MEDIA = 'media',
-  RELIGIOUS = 'religious'
+  RELIGIOUS = 'religious',
+  RSS_FEED = 'rss_feed',
+  ICS_CALENDAR = 'ics_calendar',
+  REST_API = 'rest_api',
+  HTML_SCRAPING = 'html_scraping'
 }
 
 export enum SourceCategory {
@@ -117,7 +121,7 @@ export enum UpdateFrequency {
 }
 
 export interface SearchStrategy {
-  method: 'gemini_search' | 'targeted_crawl' | 'api_integration';
+  method: 'rss_fetch' | 'ics_fetch' | 'api_fetch' | 'html_scraping' | 'gemini_search' | 'targeted_crawl' | 'api_integration';
   keywords: string[];
   exclusionTerms?: string[];
   dateRange?: {
@@ -129,6 +133,21 @@ export interface SearchStrategy {
     south: number;
     east: number;
     west: number;
+  };
+  // New fields for hybrid ETL
+  fetchConfig?: {
+    headers?: Record<string, string>;
+    queryParams?: Record<string, string>;
+    authConfig?: {
+      type: 'bearer' | 'api_key' | 'basic';
+      credentials: string;
+    };
+    parseRules?: {
+      titleSelector?: string;
+      dateSelector?: string;
+      locationSelector?: string;
+      descriptionSelector?: string;
+    };
   };
 }
 
@@ -187,4 +206,84 @@ export interface CacheStatistics {
   currentSize: number;
   maxSize: number;
   averageAccessTime: number;
+}
+
+// Hybrid ETL Source Schema
+export interface HybridSource extends InformationSource {
+  sourceId: string;
+  enabled: boolean;
+  etag?: string;
+  lastModified?: string;
+  robotsCompliant: boolean;
+  crawlDelay?: number;
+  fetchHistory: FetchAttempt[];
+  sourceValidation: {
+    contentType: string;
+    encoding: string;
+    structure: 'valid' | 'invalid' | 'unknown';
+    lastValidated: Date;
+  };
+}
+
+export interface FetchAttempt {
+  timestamp: Date;
+  success: boolean;
+  statusCode?: number;
+  error?: string;
+  itemsFound: number;
+  processingTime: number;
+}
+
+// Source Adapters
+export interface ISourceAdapter {
+  readonly sourceType: SourceType;
+  readonly name: string;
+  
+  canHandle(source: HybridSource): boolean;
+  fetch(source: HybridSource): Promise<RawEventData[]>;
+  validate(source: HybridSource): Promise<ValidationResult>;
+  normalize(rawData: RawEventData[], source: HybridSource): Promise<NormalizedEvent[]>;
+}
+
+export interface RawEventData {
+  sourceId: string;
+  rawContent: any;
+  extractedAt: Date;
+  contentHash: string;
+  sourceUrl: string;
+}
+
+export interface NormalizedEvent {
+  // Common event schema from redesign spec
+  id: string;
+  title: string;
+  description?: string;
+  starts_at: Date;
+  ends_at?: Date;
+  venue?: string;
+  city: string;
+  lat?: number;
+  lon?: number;
+  category: string;
+  price?: string;
+  organizer?: string;
+  source_url: string;
+  source_id: string;
+  last_seen: Date;
+  created_at: Date;
+  updated_at: Date;
+  
+  // Deduplication key
+  dedupe_key: string;
+  
+  // Quality metrics
+  confidence: number;
+  validation_status: 'verified' | 'pending' | 'quarantine';
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  confidence: number;
 }

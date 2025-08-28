@@ -84,6 +84,144 @@ export default defineConfig(({ mode }) => {
         host: true,
         hmr: {
           overlay: false
+        },
+        proxy: {
+          '/api/proxy-iwate': {
+            target: 'https://www.pref.iwate.jp',
+            changeOrigin: true,
+            secure: true,
+            followRedirects: true,
+            rewrite: (path) => path.replace(/^\/api\/proxy-iwate/, ''),
+            configure: (proxy, options) => {
+              proxy.on('proxyRes', (proxyRes, req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              });
+            },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          },
+          '/api/proxy-morioka': {
+            target: 'https://www.city.morioka.iwate.jp',
+            changeOrigin: true,
+            secure: true,
+            followRedirects: true,
+            rewrite: (path) => path.replace(/^\/api\/proxy-morioka/, ''),
+            configure: (proxy, options) => {
+              proxy.on('proxyRes', (proxyRes, req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              });
+            },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          },
+          '/api/proxy-iwatetabi': {
+            target: 'https://iwatetabi.jp',
+            changeOrigin: true,
+            secure: true,
+            followRedirects: true,
+            rewrite: (path) => path.replace(/^\/api\/proxy-iwatetabi/, ''),
+            configure: (proxy, options) => {
+              proxy.on('proxyRes', (proxyRes, req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              });
+            },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          },
+          '/api/proxy-hanamaki': {
+            target: 'https://www.kanko-hanamaki.ne.jp',
+            changeOrigin: true,
+            secure: true,
+            followRedirects: true,
+            rewrite: (path) => path.replace(/^\/api\/proxy-hanamaki/, ''),
+            configure: (proxy, options) => {
+              proxy.on('proxyRes', (proxyRes, req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              });
+            },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          },
+          '/api/proxy-kenmin': {
+            target: 'https://www.iwate-kenmin.jp',
+            changeOrigin: true,
+            secure: true,
+            followRedirects: true,
+            rewrite: (path) => path.replace(/^\/api\/proxy-kenmin/, ''),
+            configure: (proxy, options) => {
+              proxy.on('proxyRes', (proxyRes, req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              });
+            },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          },
+          '/api/proxy-np': {
+            target: 'https://www.iwate-np.co.jp',
+            changeOrigin: true,
+            secure: true,
+            followRedirects: true,
+            rewrite: (path) => path.replace(/^\/api\/proxy-np/, ''),
+            configure: (proxy, options) => {
+              proxy.on('proxyRes', (proxyRes, req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              });
+            },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          },
+          '/api/proxy-odette': {
+            target: 'https://www.odette.or.jp',
+            changeOrigin: true,
+            secure: true,
+            followRedirects: true,
+            rewrite: (path) => path.replace(/^\/api\/proxy-odette/, ''),
+            configure: (proxy, options) => {
+              proxy.on('proxyRes', (proxyRes, req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              });
+            },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          },
+          '/api/proxy-enjoy': {
+            target: 'https://enjoyiwate.com',
+            changeOrigin: true,
+            secure: true,
+            followRedirects: true,
+            rewrite: (path) => path.replace(/^\/api\/proxy-enjoy/, ''),
+            configure: (proxy, options) => {
+              proxy.on('proxyRes', (proxyRes, req, res) => {
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+              });
+            },
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }
         }
       },
       preview: {

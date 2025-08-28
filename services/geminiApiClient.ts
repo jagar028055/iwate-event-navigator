@@ -81,11 +81,11 @@ export async function callGeminiAPI(
 ): Promise<GeminiResponse> {
   const apiKey = getApiKey();
   const {
-    model = "gemini-2.5-flash", // グラウンディング対応モデルに変更
+    model = "gemini-2.5-flash", // Gemini 2.0+ でgoogle_search対応
     temperature = 0.7,
     topK = 40,
     topP = 0.95,
-    maxOutputTokens = 8192,
+    maxOutputTokens = 32768, // グラウンディング時の長いレスポンスに対応
     useSearch = false
   } = options;
 
@@ -166,7 +166,20 @@ export async function callGeminiAPI(
 
     const data = await response.json();
     console.log("✅ Gemini API response received");
-    console.log("🔍 Response structure:", JSON.stringify(data, null, 2).substring(0, 500));
+    console.log("🔍 Full response structure:", JSON.stringify(data, null, 2));
+    
+    // 詳細なcandidate構造を確認
+    if (data.candidates && data.candidates[0]) {
+      const candidate = data.candidates[0];
+      console.log("🧪 Candidate analysis:", {
+        hasContent: !!candidate.content,
+        contentKeys: candidate.content ? Object.keys(candidate.content) : [],
+        hasParts: !!(candidate.content && candidate.content.parts),
+        partsLength: candidate.content && candidate.content.parts ? candidate.content.parts.length : 0,
+        hasGroundingMetadata: !!candidate.groundingMetadata,
+        finishReason: candidate.finishReason
+      });
+    }
     
     // より堅牢なレスポンス構造チェック
     if (!data.candidates || !Array.isArray(data.candidates) || data.candidates.length === 0) {

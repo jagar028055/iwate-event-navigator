@@ -1,0 +1,26 @@
+name: Validate sources.yaml
+
+on:
+  pull_request:
+    paths:
+      - 'services/eventCollector/config/sources.yaml'
+      - 'docs/event-collection-redesign/sources.schema.yaml'
+      - 'scripts/validate-sources.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'services/eventCollector/config/sources.yaml'
+      - 'docs/event-collection-redesign/sources.schema.yaml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm run validate:sources

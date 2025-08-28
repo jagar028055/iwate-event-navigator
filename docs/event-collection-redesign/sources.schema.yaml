@@ -1,0 +1,158 @@
+"$schema": "http://json-schema.org/draft-07/schema#"
+"$id": "https://iwate-event-navigator.local/sources.schema.yaml"
+title: Iwate Event Navigator Hybrid ETL Source Configuration
+type: object
+description: >-
+  Hybrid ETL用の情報源設定（sources.yaml）のスキーマ。実装のSourceRegistry/HybridSourceに準拠。
+
+properties:
+  version:
+    type: [string, number]
+  description:
+    type: string
+  lastUpdated:
+    type: string
+  government:
+    type: array
+    items: { "$ref": "#/$defs/Source" }
+  tourism:
+    type: array
+    items: { "$ref": "#/$defs/Source" }
+  festivals:
+    type: array
+    items: { "$ref": "#/$defs/Source" }
+  food_events:
+    type: array
+    items: { "$ref": "#/$defs/Source" }
+  sports:
+    type: array
+    items: { "$ref": "#/$defs/Source" }
+  nature:
+    type: array
+    items: { "$ref": "#/$defs/Source" }
+  community:
+    type: array
+    items: { "$ref": "#/$defs/Source" }
+  business:
+    type: array
+    items: { "$ref": "#/$defs/Source" }
+  regional:
+    type: object
+    properties:
+      kenou:
+        type: array
+        items: { "$ref": "#/$defs/Source" }
+      kennan:
+        type: array
+        items: { "$ref": "#/$defs/Source" }
+      engan:
+        type: array
+        items: { "$ref": "#/$defs/Source" }
+      kenpoku:
+        type: array
+        items: { "$ref": "#/$defs/Source" }
+    additionalProperties: false
+  processing:
+    type: object
+    properties:
+      deduplication:
+        type: object
+        properties:
+          titleSimilarityThreshold: { type: number, minimum: 0, maximum: 1 }
+          dateSimilarityThresholdMs: { type: integer, minimum: 0 }
+          locationSimilarityThreshold: { type: number, minimum: 0, maximum: 1 }
+          enableFuzzyMatching: { type: boolean }
+        additionalProperties: false
+      caching:
+        type: object
+        properties:
+          defaultTTL: { type: integer, minimum: 0 }
+          maxCacheSize: { type: integer, minimum: 0 }
+        additionalProperties: false
+      rateLimiting:
+        type: object
+        properties:
+          maxConcurrentRequests: { type: integer, minimum: 1 }
+          requestDelayMs: { type: integer, minimum: 0 }
+        additionalProperties: false
+      validation:
+        type: object
+        properties:
+          requireTitle: { type: boolean }
+          requireDate: { type: boolean }
+          requireLocation: { type: boolean }
+          futureEventsOnly: { type: boolean }
+          maxEventAge: { type: integer, minimum: 0 }
+        additionalProperties: false
+    additionalProperties: false
+  quality:
+    type: object
+    properties:
+      minimumEventsPerSource: { type: integer, minimum: 0 }
+      maximumFailureRate: { type: number, minimum: 0, maximum: 1 }
+      minimumReliabilityScore: { type: number, minimum: 0, maximum: 1 }
+    additionalProperties: false
+
+additionalProperties: false
+
+$defs:
+  Source:
+    type: object
+    required: [id, name, url, type, category, region, updateFrequency, enabled]
+    properties:
+      id:
+        type: string
+        description: 一意識別子（英数字・ハイフン/アンダースコア）
+        pattern: "^[a-zA-Z0-9_-]+$"
+      name:
+        type: string
+      url:
+        type: string
+        format: uri
+      type:
+        type: string
+        enum: [rss_feed, ics_calendar, html_scraping, api]
+      category:
+        type: string
+        enum: [general, cultural, festivals, food_events, sports, nature, community, business]
+      region:
+        type: string
+        enum: [all, kenou, kennan, engan, kenpoku]
+      reliability:
+        type: number
+        minimum: 0
+        maximum: 1
+        default: 0.8
+      updateFrequency:
+        type: string
+        enum: [daily, weekly, monthly]
+      enabled:
+        type: boolean
+      notes:
+        type: string
+      selectors:
+        type: object
+        description: HTMLスクレイピング用セレクタ
+        properties:
+          list: { type: string }
+          title: { type: string }
+          url: { type: string }
+          date: { type: string }
+          venue: { type: string }
+        additionalProperties: true
+      mapping:
+        type: object
+        description: API(JSON)→共通スキーマのマッピング表現（ドット/配列表記）
+        additionalProperties: { type: string }
+      fetchConfig:
+        type: object
+        properties:
+          headers:
+            type: object
+            additionalProperties: { type: string }
+        additionalProperties: false
+      keywords:
+        type: array
+        items: { type: string }
+      seasonal:
+        type: boolean

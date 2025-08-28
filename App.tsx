@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MapPanel } from './components/MapPanel';
 import { EventDetailModal } from './components/EventDetailModal';
@@ -7,7 +7,9 @@ import { LoadingSpinner } from './components/icons/LoadingSpinner';
 import { useAppStore } from './store/appStore';
 import { useEventFilters } from './hooks/useEventFilters';
 import { useEventLoader } from './hooks/useEventLoader';
+import { hybridETLService } from './services/hybridETLService';
 import { DATE_FILTERS, IWATE_AREA_KEYS } from './constants';
+import type { EventInfo } from './types';
 
 
 function App() {
@@ -39,6 +41,39 @@ function App() {
 
   useEffect(() => {
     handleLoadEvents();
+    
+    // Add global test function for development
+    if (typeof window !== 'undefined') {
+      (window as any).testHybridETL = async () => {
+        console.log('🚀 Testing Hybrid ETL System...');
+        try {
+          const result = await hybridETLService.fetchIwateEvents();
+          console.log('✅ Success!', {
+            events: result.events.length,
+            sources: result.sources.length,
+            sampleEvents: result.events.slice(0, 3)
+          });
+          
+          // Show statistics
+          const stats = hybridETLService.getStatistics();
+          console.log('📊 System Statistics:', stats);
+          
+          return result;
+        } catch (error) {
+          console.error('❌ Test failed:', error);
+          throw error;
+        }
+      };
+      
+      (window as any).showSystemStats = () => {
+        const stats = hybridETLService.getStatistics();
+        console.log('📊 Hybrid ETL Statistics:', stats);
+        return stats;
+      };
+      
+      console.log('🔧 Dev mode: Run window.testHybridETL() to test the system');
+    }
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

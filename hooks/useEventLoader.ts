@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { hybridETLService } from '../services/hybridETLService';
 import { fetchIwateEvents } from '../services/geminiService';
 import { enhancedEventService } from '../services/eventCollector';
 import { useAppStore } from '../store/appStore';
@@ -20,11 +21,29 @@ export const useEventLoader = () => {
     try {
       let events = [];
       let sources = [];
-      let lastError = null;
 
-      // Step 1: Try enhanced event service first
+      // Step 1: Try Hybrid ETL service first (new primary method)
       try {
-        console.log('🚀 Attempting enhanced event collection...');
+        console.log('🚀 Attempting Hybrid ETL collection...');
+        const result = await hybridETLService.fetchIwateEvents();
+        events = result.events;
+        sources = result.sources;
+        console.log(`✅ Hybrid ETL service returned ${events.length} events`);
+        
+        if (events.length > 0) {
+          setEvents(events);
+          setSources(sources);
+          return;
+        } else {
+          console.warn('⚠️ Hybrid ETL service returned no events, trying fallback...');
+        }
+      } catch (hybridError) {
+        console.warn('❌ Hybrid ETL service failed:', hybridError);
+      }
+
+      // Step 2: Try enhanced event service as backup
+      try {
+        console.log('🔄 Trying enhanced event collection as backup...');
         const result = await enhancedEventService.fetchIwateEvents();
         events = result.events;
         sources = result.sources;
@@ -38,11 +57,10 @@ export const useEventLoader = () => {
           console.warn('⚠️ Enhanced service returned no events');
         }
       } catch (enhancedError) {
-        console.warn('❌ Enhanced service failed:', enhancedError);
-        lastError = enhancedError;
+        console.warn('❌ Enhanced service also failed:', enhancedError);
       }
 
-      // Step 2: Try original service as fallback
+      // Step 3: Try original service as final fallback
       try {
         console.log('🔄 Falling back to original service...');
         const result = await fetchIwateEvents();
@@ -59,16 +77,15 @@ export const useEventLoader = () => {
         }
       } catch (originalError) {
         console.warn('❌ Original service also failed:', originalError);
-        lastError = originalError;
       }
 
-      // Step 3: Provide sample data if all services fail
+      // Step 4: Provide sample data if all services fail
       console.log('🔧 Providing sample events as final fallback...');
       const sampleEvents = [
         {
           id: 'sample-1',
           title: '盛岡さんさ踊り（サンプル）',
-          description: 'APIキー設定後に実際のイベント情報が表示されます',
+          description: 'ハイブリッドETLシステムが初期化中です。実際のイベント情報は準備完了後に表示されます。',
           date: '2024-08-01',
           locationName: '盛岡市中央通',
           latitude: 39.7036,
@@ -80,7 +97,7 @@ export const useEventLoader = () => {
       
       setEvents(sampleEvents);
       setSources([]);
-      setError('APIキーが設定されていません。実際のイベント情報を表示するにはGemini APIキーが必要です。');
+      setError('イベント情報システムが初期化中です。しばらくお待ちください。');
       
     } catch (err) {
       console.error('💥 Complete failure in event loading:', err);

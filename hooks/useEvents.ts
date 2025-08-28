@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useAppStore } from '../store/appStore';
+import { hybridETLService } from '../services/hybridETLService';
 import { fetchIwateEvents } from '../services/geminiService';
 import { aiService } from '../services/aiService';
 import type { EventInfo, EventFilters, RecommendationRequest } from '../types';
@@ -10,7 +11,6 @@ export const useEvents = () => {
     sources,
     loading,
     error,
-    filters,
     selectedEvent,
     recommendedEvents,
     searchResults,
@@ -25,16 +25,26 @@ export const useEvents = () => {
     setSearchQuery,
   } = useAppStore();
 
-  // Load events from Gemini API
+  // Load events from Hybrid ETL API
   const loadEvents = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const { events: fetchedEvents, sources: fetchedSources } = await fetchIwateEvents();
+      let result;
       
-      setEvents(fetchedEvents);
-      setSources(fetchedSources);
+      try {
+        // Try Hybrid ETL service first
+        console.log('🚀 Loading events with Hybrid ETL...');
+        result = await hybridETLService.fetchIwateEvents();
+      } catch (hybridError) {
+        console.warn('❌ Hybrid ETL failed, falling back to legacy service:', hybridError);
+        // Fallback to original service
+        result = await fetchIwateEvents();
+      }
+      
+      setEvents(result.events);
+      setSources(result.sources);
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
