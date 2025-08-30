@@ -14,15 +14,24 @@ import type { EventInfo, Source } from '../types';
 
 /**
  * Integrated Hybrid ETL Service for Iwate Event Navigator
- * Replaces the original geminiService with a more reliable, multi-source approach
+ * REDESIGNED: Following docs/event-collection-redesign/ specifications
+ * 
+ * Architecture Priority:
+ * 1. Primary Sources: RSS feeds, ICS calendars, APIs (with ETag/Last-Modified)
+ * 2. Secondary Sources: Well-structured HTML with schema.org/microdata  
+ * 3. Minimal LLM Usage: Only for categorization, summarization, geocoding assistance
+ * 
+ * This replaces the previous Gemini-dependent approach with proper hybrid ETL
+ * as specified in the redesign documents.
  */
 class IntegratedHybridETLService {
+  private static instance: IntegratedHybridETLService | null = null;
   private etlService: HybridETLService;
   private sourceRegistry: SourceRegistry;
   private deduplicationService: DeduplicationService;
   private initialized: boolean = false;
 
-  constructor() {
+  private constructor() {
     this.etlService = new HybridETLService();
     this.sourceRegistry = new SourceRegistry({
       maxSources: 100,
@@ -34,6 +43,13 @@ class IntegratedHybridETLService {
       dateSimilarityThresholdMs: 4 * 60 * 60 * 1000, // 4 hours
       enableFuzzyMatching: true
     });
+  }
+
+  static getInstance(): IntegratedHybridETLService {
+    if (!IntegratedHybridETLService.instance) {
+      IntegratedHybridETLService.instance = new IntegratedHybridETLService();
+    }
+    return IntegratedHybridETLService.instance;
   }
 
   /**
@@ -58,29 +74,32 @@ class IntegratedHybridETLService {
     await this.initialize();
 
     try {
-      console.log('🔄 Starting hybrid event collection...');
+      console.log('🔄 Starting hybrid ETL collection (RSS/ICS/API priority)...');
       
       const collectionRequest: CollectionRequest = {
-        stages: [CollectionStage.MAJOR_EVENTS, CollectionStage.MUNICIPAL],
-        targetEventCount: 150,
-        timeLimit: 60000, // 60 seconds timeout
-        regions: [IwateRegion.ALL, IwateRegion.KENOU, IwateRegion.KENNAN, IwateRegion.ENGAN, IwateRegion.KENPOKU],
+        stages: [CollectionStage.MAJOR_EVENTS], // Focus on primary sources first
+        targetEventCount: 50, // Reduced for PoC, as per redesign docs
+        timeLimit: 30000, // 30 seconds for PoC
+        regions: [IwateRegion.ALL, IwateRegion.KENOU],
         categories: [
-          SourceCategory.FESTIVALS,
+          SourceCategory.GENERAL,
           SourceCategory.CULTURAL,
-          SourceCategory.FOOD_EVENTS,
           SourceCategory.COMMUNITY,
-          SourceCategory.SPORTS,
-          SourceCategory.NATURE,
-          SourceCategory.GENERAL
+          SourceCategory.FESTIVALS
         ],
         forceRefresh: false
       };
 
       const results = await this.etlService.collect(collectionRequest);
       
-      // Extract all events and apply final deduplication
+      // Apply deduplication following the redesign specs
       const allEvents = results.flatMap(r => r.events);
+      console.log(`📋 Raw events collected: ${allEvents.length}`);
+      
+      if (allEvents.length === 0) {
+        console.warn('⚠️ No events collected from primary sources, falling back...');
+        return this.getFallbackData();
+      }
       const deduplicationResult = await this.deduplicationService.deduplicate(allEvents);
       
       // Convert to legacy format
@@ -101,11 +120,12 @@ class IntegratedHybridETLService {
   }
 
   /**
-   * Register predefined sources based on Iwate region configuration
+   * Register predefined sources based on sources.yaml configuration
+   * Following the hybrid ETL redesign: RSS/ICS/API priority, minimal LLM usage
    */
   private async registerPredefinedSources(): Promise<void> {
     const sources: Partial<HybridSource>[] = [
-      // Government sources (highest priority) - UPDATED WITH REAL URLs
+      // PRIORITY 1: RSS/ICS/API SOURCES (Primary data collection)
       {
         name: '岩手県公式ニュースRSS',
         url: 'https://www.pref.iwate.jp/news.rss',
@@ -117,96 +137,75 @@ class IntegratedHybridETLService {
         enabled: true
       },
       {
-        name: '岩手県イベントカレンダー',
-        url: 'https://www.pref.iwate.jp/event_calendar.html',
-        type: SourceType.HTML_SCRAPING,
-        category: SourceCategory.GENERAL,
-        region: IwateRegion.ALL,
-        reliability: 1.0,
-        updateFrequency: UpdateFrequency.DAILY,
-        enabled: true
-      },
-      {
-        name: '盛岡市イベントカレンダー',
-        url: 'https://www.city.morioka.iwate.jp/event_calendar.html',
-        type: SourceType.HTML_SCRAPING,
+        name: 'Connpass岩手API',
+        url: 'https://connpass.com/api/v1/event/?keyword_or=岩手,盛岡,花巻&count=100',
+        type: SourceType.API,
         category: SourceCategory.COMMUNITY,
-        region: IwateRegion.KENOU,
+        region: IwateRegion.ALL,
         reliability: 0.95,
         updateFrequency: UpdateFrequency.DAILY,
         enabled: true
       },
-
-      // Tourism and cultural sources - UPDATED WITH REAL URLs
       {
-        name: 'いわての旅イベント情報',
-        url: 'https://iwatetabi.jp/events/',
-        type: SourceType.HTML_SCRAPING,
-        category: SourceCategory.CULTURAL,
+        name: 'Doorkeeper岩手API',
+        url: 'https://api.doorkeeper.jp/events?locale=ja&sort=starts_at&prefecture=iwate',
+        type: SourceType.API,
+        category: SourceCategory.COMMUNITY,
         region: IwateRegion.ALL,
         reliability: 0.9,
         updateFrequency: UpdateFrequency.DAILY,
         enabled: true
       },
+
+      // PRIORITY 2: Well-structured HTML with microdata/schema.org
       {
-        name: '花巻市観光協会イベント',
-        url: 'https://www.kanko-hanamaki.ne.jp/event/',
-        type: SourceType.HTML_SCRAPING,
-        category: SourceCategory.CULTURAL,
-        region: IwateRegion.KENOU,
-        reliability: 0.85,
-        updateFrequency: UpdateFrequency.WEEKLY,
-        enabled: true
-      },
-      {
-        name: '岩手県民会館イベント',
+        name: '岩手県民会館',
         url: 'https://www.iwate-kenmin.jp/events/',
         type: SourceType.HTML_SCRAPING,
         category: SourceCategory.CULTURAL,
         region: IwateRegion.KENOU,
-        reliability: 0.9,
+        reliability: 0.85,
         updateFrequency: UpdateFrequency.WEEKLY,
         enabled: true
       },
-
-      // Regional event information
       {
-        name: '盛岡観光情報イベント',
-        url: 'https://www.odette.or.jp/?page_id=264',
+        name: 'いわての旅',
+        url: 'https://iwatetabi.jp/events/',
         type: SourceType.HTML_SCRAPING,
-        category: SourceCategory.FESTIVALS,
-        region: IwateRegion.KENOU,
+        category: SourceCategory.CULTURAL,
+        region: IwateRegion.ALL,
         reliability: 0.8,
         updateFrequency: UpdateFrequency.WEEKLY,
         enabled: true
       },
-      {
-        name: '岩手日報イベント情報',
-        url: 'https://www.iwate-np.co.jp/content/event/',
-        type: SourceType.HTML_SCRAPING,
-        category: SourceCategory.GENERAL,
-        region: IwateRegion.ALL,
-        reliability: 0.85,
-        updateFrequency: UpdateFrequency.DAILY,
-        enabled: true
-      },
 
-      // Additional comprehensive sources
+      // PRIORITY 3: Secondary HTML sources (only if needed)
       {
-        name: 'エンジョイいわてイベント情報',
-        url: 'https://enjoyiwate.com/',
+        name: '花巻市観光協会',
+        url: 'https://www.kanko-hanamaki.ne.jp/event/',
         type: SourceType.HTML_SCRAPING,
-        category: SourceCategory.COMMUNITY,
-        region: IwateRegion.ALL,
+        category: SourceCategory.CULTURAL,
+        region: IwateRegion.KENOU,
         reliability: 0.75,
         updateFrequency: UpdateFrequency.WEEKLY,
-        enabled: true
+        enabled: false // Disabled by default, enable only if RSS/API insufficient
       }
     ];
 
     let registeredCount = 0;
     for (const sourceData of sources) {
       try {
+        // Check if source already exists to avoid duplicate registration
+        const existingSources = this.sourceRegistry.getAllSources();
+        const isDuplicate = existingSources.some(existing => 
+          existing.name === sourceData.name || existing.url === sourceData.url
+        );
+        
+        if (isDuplicate) {
+          // Silently skip duplicates in development mode
+          continue;
+        }
+        
         const sourceId = await this.sourceRegistry.addSource(sourceData);
         const source = this.sourceRegistry.getSource(sourceId);
         if (source) {
@@ -214,7 +213,10 @@ class IntegratedHybridETLService {
           registeredCount++;
         }
       } catch (error) {
-        console.warn(`Failed to register source ${sourceData.name}:`, error.message);
+        // Only log if it's not a duplicate error
+        if (!error.message.includes('already exists')) {
+          console.warn(`Failed to register source ${sourceData.name}:`, error.message);
+        }
       }
     }
 
@@ -325,7 +327,7 @@ class IntegratedHybridETLService {
 }
 
 // Create singleton instance
-export const hybridETLService = new IntegratedHybridETLService();
+export const hybridETLService = IntegratedHybridETLService.getInstance();
 
 // Export for backwards compatibility with existing imports
 export const fetchIwateEvents = () => hybridETLService.fetchIwateEvents();

@@ -1,284 +1,120 @@
-# Hybrid ETL Source Configuration for Iwate Event Navigator
-# Based on the redesign documentation (05_情報源リスト_岩手.md)
+# Iwate Event Navigator Hybrid ETL Source Configuration
+# Following the redesign documents in docs/event-collection-redesign/
+# Schema validation: docs/event-collection-redesign/sources.schema.yaml
 
-version: 1.0
-description: "岩手県イベント情報収集ソース設定（ハイブリッドETL用）"
-lastUpdated: "2025-01-27"
+version: "1.0.0"
+description: "Primary sources for Iwate event collection - RSS/ICS/API priority"
+lastUpdated: "2025-08-31"
 
-# Government and Official Sources (Priority: High)
+# PRIORITY 1: RSS/ICS/API SOURCES (Primary data collection)
 government:
-  - id: iwate_pref_main
-    name: "岩手県公式サイト"
-    url: "https://www.pref.iwate.jp/feed/"
+  - id: iwate_news_rss
+    name: "岩手県公式ニュースRSS" 
+    url: "https://www.pref.iwate.jp/news.rss"
     type: rss_feed
     category: general
     region: all
     reliability: 1.0
     updateFrequency: daily
     enabled: true
-    notes: "最高信頼度の公式情報源"
-    
-  - id: morioka_city
-    name: "盛岡市公式イベント"
-    url: "https://www.city.morioka.iwate.jp/rss/events.xml"
-    type: rss_feed
+    notes: "Primary government source - highest priority"
+
+# Community API sources (Connpass, Doorkeeper)
+community:
+  - id: connpass_iwate
+    name: "Connpass 岩手"
+    url: "https://connpass.com/api/v1/event/"
+    type: api
     category: community
-    region: kenou
+    region: all
     reliability: 0.95
     updateFrequency: daily
     enabled: true
+    mapping:
+      title: "events[].title"
+      starts_at: "events[].started_at"
+      ends_at: "events[].ended_at"
+      url: "events[].event_url"
+      venue: "events[].address"
+      organizer: "events[].owner_display_name"
+    keywords: ["岩手", "盛岡", "花巻", "一関", "奥州"]
     
-  - id: hanamaki_city
-    name: "花巻市イベント情報"
-    url: "https://www.city.hanamaki.iwate.jp/events.rss"
-    type: rss_feed
-    category: cultural
-    region: kenou
-    reliability: 0.95
+  - id: doorkeeper_iwate
+    name: "Doorkeeper 岩手"
+    url: "https://api.doorkeeper.jp/events"
+    type: api
+    category: community
+    region: all
+    reliability: 0.9
     updateFrequency: daily
     enabled: true
 
-# Tourism and Cultural Organizations (Priority: High)
+# PRIORITY 2: Well-structured HTML sources
 tourism:
-  - id: iwate_kanko
-    name: "岩手県観光協会"
-    url: "https://iwate-kanko.jp/feed/"
-    type: rss_feed
-    category: cultural
-    region: all
-    reliability: 0.9
-    updateFrequency: daily
-    enabled: true
-    
-  - id: iwate_kenmin_kaikan
+  - id: iwate_kenmin_hall
     name: "岩手県民会館"
-    url: "https://iwate-kenmin.jp/events.ics"
-    type: ics_calendar
-    category: cultural
-    region: kenou
-    reliability: 0.9
-    updateFrequency: weekly
-    enabled: true
-    fetchConfig:
-      headers:
-        "Accept": "text/calendar"
-        
-  - id: hanamaki_bunka
-    name: "花巻市文化会館"
-    url: "https://hanamaki-bunka.jp/calendar.ics"
-    type: ics_calendar
+    url: "https://www.iwate-kenmin.jp/events/"
+    type: html_scraping
     category: cultural
     region: kenou
     reliability: 0.85
     updateFrequency: weekly
     enabled: true
+    selectors:
+      list: ".event-item"
+      title: ".event-title"
+      url: ".event-link@href"
+      date: ".event-date"
+      venue: ".event-venue"
+    notes: "Well-structured site with consistent markup"
 
-# Festival and Event Specialized Sources
-festivals:
-  - id: iwate_matsuri
-    name: "岩手まつり情報"
-    url: "https://iwate-matsuri.jp/feed/"
-    type: rss_feed
-    category: festivals
-    region: all
-    reliability: 0.85
-    updateFrequency: weekly
-    enabled: true
-    keywords: ["まつり", "祭り", "フェスティバル"]
-    
-  - id: sansa_odori
-    name: "盛岡さんさ踊り"
-    url: "https://sansa-odori.jp/calendar.ics"
-    type: ics_calendar
-    category: festivals
-    region: kenou
-    reliability: 0.9
-    updateFrequency: monthly
-    enabled: true
-    seasonal: true
-
-# Food and Gourmet Events
-food_events:
-  - id: sanriku_gourmet
-    name: "三陸グルメ情報"
-    url: "https://sanriku-gourmet.jp/events.rss"
-    type: rss_feed
-    category: food_events
-    region: engan
-    reliability: 0.75
-    updateFrequency: weekly
-    enabled: true
-    
-  - id: iwate_agri
-    name: "岩手農業イベント"
-    url: "https://iwate-agri.jp/harvest-events.xml"
-    type: rss_feed
-    category: food_events
+  - id: iwate_tabi
+    name: "いわての旅"
+    url: "https://iwatetabi.jp/events/"
+    type: html_scraping
+    category: cultural
     region: all
     reliability: 0.8
     updateFrequency: weekly
     enabled: true
+    notes: "Official tourism portal - good structured data"
 
-# Sports Events
-sports:
-  - id: iwate_sports
-    name: "岩手県スポーツ振興事業団"
-    url: "https://iwate-sports.or.jp/events.ics"
-    type: ics_calendar
-    category: sports
-    region: all
-    reliability: 0.85
-    updateFrequency: weekly
-    enabled: true
-    
-  - id: iwate_marathon
-    name: "いわて銀河マラソン"
-    url: "https://iwate-marathon.jp/events.rss"
-    type: rss_feed
-    category: sports
-    region: kenou
-    reliability: 0.9
-    updateFrequency: monthly
-    enabled: true
-    seasonal: true
-
-# Nature and Outdoor Events
-nature:
-  - id: iwate_park
-    name: "岩手県立公園"
-    url: "https://iwate-park.jp/events-feed.xml"
-    type: rss_feed
-    category: nature
-    region: all
-    reliability: 0.8
-    updateFrequency: weekly
-    enabled: true
-    
-  - id: hiraizumi_events
-    name: "平泉観光イベント"
-    url: "https://hiraizumi.or.jp/calendar.ics"
-    type: ics_calendar
-    category: cultural
-    region: kennan
-    reliability: 0.85
-    updateFrequency: weekly
-    enabled: true
-
-# Regional Sources (County/Municipal)
+# PRIORITY 3: Secondary sources (disabled by default for PoC)
 regional:
   kenou:
-    - id: takizawa_city
-      name: "滝沢市イベント"
-      url: "https://www.city.takizawa.iwate.jp/events.rss"
-      type: rss_feed
-      category: community
+    - id: hanamaki_kanko
+      name: "花巻市観光協会"
+      url: "https://www.kanko-hanamaki.ne.jp/event/"
+      type: html_scraping
+      category: cultural
       region: kenou
-      reliability: 0.8
-      updateFrequency: daily
-      enabled: true
-      
-  kennan:
-    - id: ichinoseki_city
-      name: "一関市イベント"
-      url: "https://www.city.ichinoseki.iwate.jp/feed/"
-      type: rss_feed
-      category: community
-      region: kennan
-      reliability: 0.85
-      updateFrequency: daily
-      enabled: true
-      
-    - id: oshu_city
-      name: "奥州市イベント"
-      url: "https://www.city.oshu.iwate.jp/events.xml"
-      type: rss_feed
-      category: community
-      region: kennan
-      reliability: 0.8
-      updateFrequency: daily
-      enabled: true
-      
-  engan:
-    - id: kamaishi_city
-      name: "釜石市イベント"
-      url: "https://www.city.kamaishi.iwate.jp/events.rss"
-      type: rss_feed
-      category: community
-      region: engan
-      reliability: 0.8
-      updateFrequency: daily
-      enabled: true
-      
-    - id: ofunato_city
-      name: "大船渡市イベント"
-      url: "https://www.city.ofunato.iwate.jp/feed/"
-      type: rss_feed
-      category: community
-      region: engan
-      reliability: 0.8
-      updateFrequency: daily
-      enabled: true
-      
-  kenpoku:
-    - id: kuji_city
-      name: "久慈市イベント"
-      url: "https://www.city.kuji.iwate.jp/events.rss"
-      type: rss_feed
-      category: community
-      region: kenpoku
-      reliability: 0.8
-      updateFrequency: daily
-      enabled: true
+      reliability: 0.75
+      updateFrequency: weekly
+      enabled: false  # Disabled for PoC - enable only if primary sources insufficient
+      notes: "Secondary source - enable only if needed"
 
-# Community and Local Sources
-community:
-  - id: iwate_community_center
-    name: "岩手県地域情報"
-    url: "https://iwate-community.jp/local-events.xml"
-    type: rss_feed
-    category: community
-    region: all
-    reliability: 0.7
-    updateFrequency: weekly
-    enabled: true
-    
-# Business and Commercial Events  
-business:
-  - id: iwate_chamber
-    name: "岩手県商工会議所"
-    url: "https://iwate-cci.or.jp/events.rss"
-    type: rss_feed
-    category: business
-    region: all
-    reliability: 0.75
-    updateFrequency: weekly
-    enabled: true
-
-# Configuration for ETL Processing
+# Processing configuration (following redesign specs)
 processing:
   deduplication:
     titleSimilarityThreshold: 0.8
     dateSimilarityThresholdMs: 14400000  # 4 hours
     locationSimilarityThreshold: 0.7
     enableFuzzyMatching: true
-    
   caching:
     defaultTTL: 3600000  # 1 hour
-    maxCacheSize: 10000
-    
+    maxCacheSize: 1000
   rateLimiting:
-    maxConcurrentRequests: 5
-    requestDelayMs: 1000
-    
+    maxConcurrentRequests: 1
+    requestDelayMs: 1000  # 1 second between requests
   validation:
     requireTitle: true
     requireDate: true
-    requireLocation: false
+    requireLocation: false  # Allow events without specific location
     futureEventsOnly: true
-    maxEventAge: 31536000000  # 1 year
+    maxEventAge: 31536000000  # 1 year in milliseconds
 
-# Quality Gates
+# Quality gates (following redesign KPIs)
 quality:
   minimumEventsPerSource: 1
-  maximumFailureRate: 0.3
-  minimumReliabilityScore: 0.5
+  maximumFailureRate: 0.02  # 2% max failure rate
+  minimumReliabilityScore: 0.7

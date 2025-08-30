@@ -22,9 +22,9 @@ export const useEventLoader = () => {
       let events = [];
       let sources = [];
 
-      // Step 1: Try Hybrid ETL service first (new primary method)
+      // Step 1: Try Hybrid ETL service FIRST (following redesign docs)
       try {
-        console.log('🚀 Attempting Hybrid ETL collection...');
+        console.log('🚀 Attempting Hybrid ETL collection (RSS/ICS/API priority)...');
         const result = await hybridETLService.fetchIwateEvents();
         events = result.events;
         sources = result.sources;
@@ -33,6 +33,7 @@ export const useEventLoader = () => {
         if (events.length > 0) {
           setEvents(events);
           setSources(sources);
+          console.log('🎉 Success! Using hybrid ETL (NOT Gemini-dependent)');
           return;
         } else {
           console.warn('⚠️ Hybrid ETL service returned no events, trying fallback...');
@@ -60,23 +61,24 @@ export const useEventLoader = () => {
         console.warn('❌ Enhanced service also failed:', enhancedError);
       }
 
-      // Step 3: Try original service as final fallback
+      // Step 3: Try original Gemini service as LAST RESORT (deprecated approach)
       try {
-        console.log('🔄 Falling back to original service...');
+        console.log('🔄 Falling back to original Gemini service (deprecated)...');
         const result = await fetchIwateEvents();
         events = result.events;
         sources = result.sources;
-        console.log(`✅ Original service returned ${events.length} events`);
+        console.log(`✅ Original Gemini service returned ${events.length} events`);
         
         if (events.length > 0) {
           setEvents(events);
           setSources(sources);
+          console.warn('⚠️ Using deprecated Gemini approach - should migrate to hybrid ETL');
           return;
         } else {
-          console.warn('⚠️ Original service returned no events');
+          console.warn('⚠️ Original Gemini service returned no events');
         }
       } catch (originalError) {
-        console.warn('❌ Original service also failed:', originalError);
+        console.warn('❌ Original Gemini service also failed:', originalError);
       }
 
       // Step 4: Provide sample data if all services fail
