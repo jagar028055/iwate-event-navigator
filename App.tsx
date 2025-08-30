@@ -40,8 +40,10 @@ function App() {
   };
 
   useEffect(() => {
-    // Temporarily disable auto-loading to prevent infinite loop
-    // handleLoadEvents();
+    // Load events on mount
+    if (events.length === 0 && !isLoading) {
+      handleLoadEvents();
+    }
     
     // Add global test function for development
     if (typeof window !== 'undefined') {
@@ -81,9 +83,45 @@ function App() {
           console.log('✅ HTTP test successful');
           console.log('Response length:', text.length);
           console.log('Is mock data?', response.headers.get('X-Mock-Data') === 'true');
-          return { success: true, length: text.length, isMock: response.headers.get('X-Mock-Data') };
+          console.log('First 200 chars:', text.substring(0, 200));
+          return { success: true, length: text.length, isMock: response.headers.get('X-Mock-Data'), preview: text.substring(0, 200) };
         } catch (error) {
           console.error('❌ HTTP test failed:', error);
+          return { success: false, error: error.message };
+        }
+      };
+
+      (window as any).testRawFetch = async () => {
+        console.log('🔬 Raw fetch test (bypass all systems)...');
+        try {
+          // Test 1: Direct fetch with proxy
+          console.log('Test 1: Direct proxy fetch');
+          const proxyResponse = await fetch('/api/proxy-iwate/news.rss');
+          console.log('Proxy response status:', proxyResponse.status);
+          if (!proxyResponse.ok) {
+            console.log('Proxy failed, trying mock...');
+            
+            // Test 2: Mock data generation
+            const mockRSS = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>テストRSS</title>
+    <item>
+      <title>テストイベント</title>
+      <description>これはテスト用のイベントです</description>
+      <pubDate>${new Date().toISOString()}</pubDate>
+    </item>
+  </channel>
+</rss>`;
+            console.log('Generated mock RSS:', mockRSS.length, 'chars');
+            return { success: true, data: mockRSS, isMock: true };
+          } else {
+            const text = await proxyResponse.text();
+            console.log('Proxy success! Length:', text.length);
+            return { success: true, data: text.substring(0, 200), isMock: false };
+          }
+        } catch (error) {
+          console.error('❌ Raw fetch test failed:', error);
           return { success: false, error: error.message };
         }
       };
@@ -97,7 +135,7 @@ function App() {
     }
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [events.length, isLoading]);
 
 
 

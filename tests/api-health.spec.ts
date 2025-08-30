@@ -6,11 +6,7 @@ test.describe('API健全性チェック', () => {
     // テスト用のAPIキーが設定されているかチェック
     // ブラウザ環境でのアクセスに変更
     await page.goto('/');
-    const hasApiKey = await page.evaluate(() => {
-      return !!(window as any).__GEMINI_API_KEY__ || 
-             !!(import.meta as any)?.env?.GEMINI_API_KEY || 
-             !!(import.meta as any)?.env?.VITE_GEMINI_API_KEY;
-    });
+    const hasApiKey = await page.evaluate('() => { const windowObj = window as any; return !!(windowObj.__GEMINI_API_KEY__) || !!(windowObj.__ENV__ && windowObj.__ENV__.GEMINI_API_KEY); }');
     
     if (!hasApiKey) {
       test.skip('API key not configured for testing');

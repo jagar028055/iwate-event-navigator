@@ -185,15 +185,15 @@ test.describe('岩手イベントナビゲーター - API機能テスト', () =>
     await page.goto('/');
     
     // ページのコンテキストで環境変数の存在を確認
-    const hasGeminiKey = await page.evaluate(() => {
-      // ブラウザ環境でアクセス可能な環境変数をチェック
-      return !!(window as any).__GEMINI_API_KEY__ || 
-             !!(import.meta as any).env?.VITE_GEMINI_API_KEY ||
-             !!(import.meta as any).env?.GEMINI_API_KEY;
-    });
+    const hasGeminiKey = await page.evaluate('() => {
+      const windowObj = window as any;
+      return !!(windowObj.__GEMINI_API_KEY__) || 
+             !!(windowObj.__ENV__ && windowObj.__ENV__.GEMINI_API_KEY);
+    }');
     
     if (!hasGeminiKey) {
       console.warn('Gemini API key not found in client environment. Check build configuration.');
+      test.skip();
     }
   });
 

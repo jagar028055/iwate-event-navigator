@@ -1,7 +1,7 @@
 // Lightweight persistence utilities for PoC snapshot and run log storage
 // Safe to import in browser builds: functions no-op when Node.js fs is unavailable
 
-import path from 'node:path';
+// Import path conditionally for Node.js environments only
 
 type RawEventData = {
   sourceId: string;
@@ -31,11 +31,21 @@ function isNodeEnv(): boolean {
   return !!(g?.process?.versions?.node);
 }
 
-async function getFs(): Promise<typeof import('node:fs/promises') | null> {
+async function getFs(): Promise<any | null> {
   if (!isNodeEnv()) return null;
   try {
     const fs = await import('node:fs/promises');
     return fs;
+  } catch {
+    return null;
+  }
+}
+
+async function getPath(): Promise<any | null> {
+  if (!isNodeEnv()) return null;
+  try {
+    const path = await import('node:path');
+    return path;
   } catch {
     return null;
   }
@@ -49,7 +59,8 @@ async function ensureDir(dirPath: string): Promise<void> {
 
 export async function saveSnapshot(raw: RawEventData, sourceId: string, ext: 'html' | 'ics' | 'xml' | 'json'): Promise<string | null> {
   const fs = await getFs();
-  if (!fs) return null;
+  const path = await getPath();
+  if (!fs || !path) return null;
 
   const date = new Date(raw.extractedAt);
   const dateDir = date.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -71,7 +82,8 @@ export async function saveSnapshot(raw: RawEventData, sourceId: string, ext: 'ht
 
 export async function writeRunLog(entry: RunLog): Promise<string | null> {
   const fs = await getFs();
-  if (!fs) return null;
+  const path = await getPath();
+  if (!fs || !path) return null;
 
   const dateDir = entry.started_at.slice(0, 10);
   const baseDir = path.join(process.cwd(), 'var', 'runlogs', dateDir);
