@@ -1,4 +1,10 @@
 // Simple test script for Hybrid ETL system
+// Set Node env flags for fast, deterministic PoC
+process.env.VITE_CITY_SCOPE = process.env.VITE_CITY_SCOPE || 'morioka';
+process.env.CITY_SCOPE = process.env.CITY_SCOPE || 'morioka';
+process.env.FORCE_MOCK_FETCH = process.env.FORCE_MOCK_FETCH || '1';
+process.env.HTTP_TIMEOUT_MS = process.env.HTTP_TIMEOUT_MS || '3000';
+
 import { hybridETLService } from './services/hybridETLService.ts';
 
 async function testHybridETL() {

@@ -30,6 +30,7 @@ class IntegratedHybridETLService {
   private sourceRegistry: SourceRegistry;
   private deduplicationService: DeduplicationService;
   private initialized: boolean = false;
+  private cityScope: string | undefined;
 
   private constructor() {
     this.etlService = new HybridETLService();
@@ -43,6 +44,22 @@ class IntegratedHybridETLService {
       dateSimilarityThresholdMs: 4 * 60 * 60 * 1000, // 4 hours
       enableFuzzyMatching: true
     });
+
+    // Read city scope from Vite env (browser) or Node env
+    try {
+      const scope = (import.meta as any)?.env?.VITE_CITY_SCOPE;
+      this.cityScope = typeof scope === 'string' ? scope.toLowerCase() : undefined;
+    } catch (_) {
+      this.cityScope = undefined;
+    }
+    if (!this.cityScope) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const g: any = globalThis as any;
+      const nodeScope = g?.process?.env?.VITE_CITY_SCOPE || g?.process?.env?.CITY_SCOPE;
+      if (typeof nodeScope === 'string') {
+        this.cityScope = nodeScope.toLowerCase();
+      }
+    }
   }
 
   static getInstance(): IntegratedHybridETLService {
@@ -80,7 +97,7 @@ class IntegratedHybridETLService {
         stages: [CollectionStage.MAJOR_EVENTS], // Focus on primary sources first
         targetEventCount: 50, // Reduced for PoC, as per redesign docs
         timeLimit: 30000, // 30 seconds for PoC
-        regions: [IwateRegion.ALL, IwateRegion.KENOU],
+        regions: this.cityScope === 'morioka' ? [IwateRegion.KENOU] : [IwateRegion.ALL, IwateRegion.KENOU],
         categories: [
           SourceCategory.GENERAL,
           SourceCategory.CULTURAL,
@@ -102,8 +119,16 @@ class IntegratedHybridETLService {
       }
       const deduplicationResult = await this.deduplicationService.deduplicate(allEvents);
       
+      // Apply city-scope filter (Morioka) if enabled
+      let scopedEvents = deduplicationResult.deduplicatedEvents;
+      if (this.cityScope === 'morioka') {
+        const before = scopedEvents.length;
+        scopedEvents = scopedEvents.filter(e => this.isMoriokaEvent(e));
+        console.log(`🏙️ City scope: Morioka. Filtered ${before} -> ${scopedEvents.length} events.`);
+      }
+      
       // Convert to legacy format
-      const events = deduplicationResult.deduplicatedEvents.map(this.convertToEventInfo);
+      const events = scopedEvents.map(this.convertToEventInfo);
       const sources = this.extractUniqueSources(results);
 
       console.log(`✅ Collection completed: ${events.length} events from ${sources.length} sources`);
@@ -116,6 +141,34 @@ class IntegratedHybridETLService {
       
       // Return fallback data instead of throwing
       return this.getFallbackData();
+    }
+  }
+
+  /**
+   * Determine if an event is in/for Morioka City
+   */
+  private isMoriokaEvent(enhancedEvent: any): boolean {
+    try {
+      const title: string = (enhancedEvent?.title || '').toString();
+      const locName: string = (enhancedEvent?.locationName || '').toString();
+      const srcUrl: string = (enhancedEvent?.collectionMetadata?.sourceUrl || '').toString();
+      const lat: number | undefined = enhancedEvent?.latitude;
+      const lon: number | undefined = enhancedEvent?.longitude;
+
+      const includesMorioka = (s: string) => /盛岡|Morioka/i.test(s);
+      if (includesMorioka(title) || includesMorioka(locName)) return true;
+      if (/city\.morioka\.iwate\.jp/i.test(srcUrl)) return true;
+
+      // Bounding box around Morioka city (approx.)
+      if (typeof lat === 'number' && typeof lon === 'number' && !Number.isNaN(lat) && !Number.isNaN(lon)) {
+        const withinLat = lat >= 39.55 && lat <= 39.85;
+        const withinLon = lon >= 140.95 && lon <= 141.35;
+        if (withinLat && withinLon) return true;
+      }
+
+      return false;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -137,9 +190,19 @@ class IntegratedHybridETLService {
         enabled: true
       },
       {
+        name: '盛岡市イベントカレンダー',
+        url: 'https://www.city.morioka.iwate.jp/event_calendar.html',
+        type: SourceType.HTML_SCRAPING,
+        category: SourceCategory.GENERAL,
+        region: IwateRegion.KENOU,
+        reliability: 0.9,
+        updateFrequency: UpdateFrequency.DAILY,
+        enabled: true
+      },
+      {
         name: 'Connpass岩手API',
-        url: 'https://connpass.com/api/v1/event/?keyword_or=岩手,盛岡,花巻&count=100',
-        type: SourceType.API,
+        url: 'https://connpass.com/api/v1/event/?keyword=盛岡&count=100',
+        type: SourceType.REST_API,  // Fixed: was rest_api, should be REST_API
         category: SourceCategory.COMMUNITY,
         region: IwateRegion.ALL,
         reliability: 0.95,
@@ -148,8 +211,8 @@ class IntegratedHybridETLService {
       },
       {
         name: 'Doorkeeper岩手API',
-        url: 'https://api.doorkeeper.jp/events?locale=ja&sort=starts_at&prefecture=iwate',
-        type: SourceType.API,
+        url: 'https://api.doorkeeper.jp/events?q=盛岡&locale=ja&sort=starts_at',
+        type: SourceType.REST_API,  // Fixed: was API, should be REST_API 
         category: SourceCategory.COMMUNITY,
         region: IwateRegion.ALL,
         reliability: 0.9,
@@ -175,6 +238,16 @@ class IntegratedHybridETLService {
         category: SourceCategory.CULTURAL,
         region: IwateRegion.ALL,
         reliability: 0.8,
+        updateFrequency: UpdateFrequency.WEEKLY,
+        enabled: false
+      },
+      {
+        name: '盛岡観光情報（Odette）',
+        url: 'https://www.odette.or.jp/?page_id=264',
+        type: SourceType.HTML_SCRAPING,
+        category: SourceCategory.CULTURAL,
+        region: IwateRegion.KENOU,
+        reliability: 0.85,
         updateFrequency: UpdateFrequency.WEEKLY,
         enabled: true
       },

@@ -1,18 +1,51 @@
 export class HttpClient {
   private isProduction: boolean;
   private isDevelopment: boolean;
+  private isNode: boolean;
   
   constructor() {
-    this.isProduction = import.meta.env.PROD;
-    this.isDevelopment = import.meta.env.DEV;
+    // Safe access to Vite env (browser only)
+    const env = (import.meta as any)?.env || {};
+    this.isProduction = !!env.PROD;
+    this.isDevelopment = !!env.DEV;
+    // Detect Node.js runtime
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g: any = globalThis as any;
+    this.isNode = !!(g?.process?.versions?.node);
   }
 
   async fetch(url: string, options?: RequestInit): Promise<Response> {
-    if (this.isProduction) {
-      return fetch(url, {
-        ...options,
-        mode: 'cors'
-      });
+    // Force mock if env flag set
+    const forceMock = this.getEnvFlag('FORCE_MOCK_FETCH') || this.getEnvFlag('VITE_FORCE_MOCK');
+    if (forceMock) {
+      return this.createMockResponse(url);
+    }
+    const timeoutMs = this.getTimeoutMs();
+    const useMockOnError = this.isDevelopment || this.isNode;
+
+    // In production builds, or when running under Node, fetch directly (with timeout)
+    if (this.isProduction || this.isNode) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, {
+          ...options,
+          // Node's fetch ignores mode; browser production uses CORS
+          mode: 'cors' as RequestMode,
+          signal: controller.signal
+        });
+        clearTimeout(id);
+        if (!res.ok && useMockOnError) {
+          console.warn(`Direct fetch failed (${res.status}) for ${url}. Returning mock.`);
+          return this.createMockResponse(url);
+        }
+        return res;
+      } catch (err) {
+        clearTimeout(id);
+        console.warn(`Direct fetch error for ${url}:`, err);
+        if (useMockOnError) return this.createMockResponse(url);
+        throw err;
+      }
     }
 
     // Development mode - try proxy first, fallback to sample data
@@ -39,8 +72,41 @@ export class HttpClient {
     }
   }
 
+  private getTimeoutMs(): number {
+    try {
+      // Prefer Vite env when available
+      const env = (import.meta as any)?.env || {};
+      const fromVite = parseInt(env.VITE_HTTP_TIMEOUT_MS, 10);
+      if (!Number.isNaN(fromVite) && fromVite > 0) return fromVite;
+    } catch {}
+    // Fallback to Node env
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g: any = globalThis as any;
+    const raw = g?.process?.env?.HTTP_TIMEOUT_MS || g?.process?.env?.VITE_HTTP_TIMEOUT_MS;
+    const fromNode = parseInt(raw, 10);
+    if (!Number.isNaN(fromNode) && fromNode > 0) return fromNode;
+    return 8000;
+  }
+
+  private getEnvFlag(name: string): boolean {
+    try {
+      const env = (import.meta as any)?.env || {};
+      if (env && typeof env[name] !== 'undefined') {
+        const v = String(env[name]).toLowerCase();
+        return v === '1' || v === 'true';
+      }
+    } catch {}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g: any = globalThis as any;
+    const v = (g?.process?.env?.[name] || '').toLowerCase();
+    return v === '1' || v === 'true';
+  }
+
   private createMockResponse(url: string): Response {
+    console.log(`🎭 Creating mock response for: ${url}`);
     const mockData = this.generateMockData(url);
+    console.log(`📝 Mock data length: ${mockData.length} characters`);
+    
     return new Response(mockData, {
       status: 200,
       statusText: 'OK (Mock)',

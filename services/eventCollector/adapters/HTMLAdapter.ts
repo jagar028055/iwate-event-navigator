@@ -13,6 +13,7 @@ export class HTMLAdapter implements ISourceAdapter {
 
   async fetch(source: HybridSource): Promise<RawEventData[]> {
     const startTime = Date.now();
+    console.log(`🌐 HTMLAdapter fetching: ${source.url}`);
     
     try {
       const headers: Record<string, string> = {
@@ -31,16 +32,26 @@ export class HTMLAdapter implements ISourceAdapter {
       }
 
       const response = await httpClient.fetch(source.url, { headers });
+      console.log(`📡 Response status: ${response.status}, Mock: ${response.headers.get('X-Mock-Data')}`);
       
       if (response.status === 304) {
+        console.log(`✅ 304 Not Modified for ${source.url}`);
         return [];
       }
 
       if (!response.ok) {
+        console.error(`❌ HTTP Error ${response.status}: ${response.statusText} for ${source.url}`);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const htmlContent = await response.text();
+      console.log(`📄 HTML content length: ${htmlContent.length} chars for ${source.url}`);
+      
+      if (htmlContent.length === 0) {
+        console.warn(`⚠️ Empty HTML content from ${source.url}`);
+        return [];
+      }
+      
       const contentHash = await this.generateContentHash(htmlContent);
 
       // Update source metadata
@@ -137,9 +148,23 @@ export class HTMLAdapter implements ISourceAdapter {
   }
 
   private async extractEventsFromHTML(html: string, source: HybridSource): Promise<ExtractedEventData[]> {
-    // Create a simple DOM parser for the browser environment
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    // Parse HTML in both browser and Node runtimes
+    const isBrowser = typeof window !== 'undefined' && typeof (window as any).DOMParser !== 'undefined';
+    let doc: any;
+    if (isBrowser) {
+      const parser = new DOMParser();
+      doc = parser.parseFromString(html, 'text/html');
+    } else {
+      // Node: use linkedom to create a Document compatible enough for querySelector
+      try {
+        const { parseHTML } = await import('linkedom');
+        const { document } = parseHTML(html);
+        doc = document;
+      } catch (error) {
+        console.error('HTML parsing not available in Node environment:', error);
+        return [];
+      }
+    }
     
     const events: ExtractedEventData[] = [];
 
@@ -161,7 +186,7 @@ export class HTMLAdapter implements ISourceAdapter {
     return events.filter(event => this.isValidExtractedEvent(event));
   }
 
-  private extractWithSelectors(doc: Document, parseRules: any): ExtractedEventData[] {
+  private extractWithSelectors(doc: any, parseRules: any): ExtractedEventData[] {
     const events: ExtractedEventData[] = [];
     
     try {
@@ -189,12 +214,12 @@ export class HTMLAdapter implements ISourceAdapter {
     return events;
   }
 
-  private extractWithHeuristics(doc: Document, source: HybridSource): ExtractedEventData[] {
+  private extractWithHeuristics(doc: any, source: HybridSource): ExtractedEventData[] {
     const events: ExtractedEventData[] = [];
     
     try {
       // Heuristic patterns for different types of pages
-      const eventKeywords = source.searchStrategy.keywords || ['イベント', 'まつり', '祭り', 'フェス', 'コンサート'];
+      const eventKeywords = source.searchStrategy.keywords || ['イベント', 'まつり', '祭り', 'フェス', 'コンサート', '開催', '実施'];
       
       // Look for structured data first
       events.push(...this.extractStructuredData(doc));
@@ -205,6 +230,9 @@ export class HTMLAdapter implements ISourceAdapter {
       // Look for calendar-like structures
       events.push(...this.extractFromCalendarStructures(doc));
       
+      // Look for news/announcement patterns (common in government sites)
+      events.push(...this.extractFromNewsPatterns(doc, eventKeywords));
+      
     } catch (error) {
       console.error('Heuristic extraction failed:', error);
     }
@@ -212,7 +240,7 @@ export class HTMLAdapter implements ISourceAdapter {
     return events;
   }
 
-  private extractStructuredData(doc: Document): ExtractedEventData[] {
+  private extractStructuredData(doc: any): ExtractedEventData[] {
     const events: ExtractedEventData[] = [];
     
     // Look for JSON-LD structured data
@@ -296,6 +324,108 @@ export class HTMLAdapter implements ISourceAdapter {
     });
 
     return events;
+  }
+
+  private extractFromNewsPatterns(doc: Document, keywords: string[]): ExtractedEventData[] {
+    const events: ExtractedEventData[] = [];
+    
+    // Look for news/announcement items that mention events
+    const newsSelectors = [
+      '.news-item', '.announcement', '.info-item', '.content-item',
+      '.post', '.entry', '.article-item', '.list-item', 
+      'main .content li', 'main .section li', '.main-content li'
+    ];
+    
+    for (const selector of newsSelectors) {
+      const items = doc.querySelectorAll(selector);
+      
+      items.forEach(item => {
+        const text = item.textContent || '';
+        const hasEventKeyword = keywords.some(keyword => text.includes(keyword));
+        
+        if (hasEventKeyword) {
+          // Extract date from various patterns in the text
+          const dateText = this.extractDateFromNewsItem(item, text);
+          
+          const event: ExtractedEventData = {
+            title: this.extractTitleFromNewsItem(item),
+            description: this.extractDescriptionFromNewsItem(item),
+            dateText: dateText,
+            location: this.extractLocationFromText(text),
+            url: this.extractURL(item, 'a')
+          };
+          
+          if (event.title && event.title.length > 5) {
+            events.push(event);
+          }
+        }
+      });
+    }
+
+    return events;
+  }
+
+  private extractTitleFromNewsItem(element: Element): string {
+    // Look for title in multiple patterns
+    const titleSelectors = [
+      'h1', 'h2', 'h3', 'h4', '.title', '.heading', 
+      '.subject', '.name', 'a', 'strong', '.item-title'
+    ];
+    
+    for (const selector of titleSelectors) {
+      const titleEl = element.querySelector(selector);
+      if (titleEl?.textContent?.trim()) {
+        const title = titleEl.textContent.trim();
+        // Filter out very short or generic titles
+        if (title.length > 5 && !this.isGenericTitle(title)) {
+          return title;
+        }
+      }
+    }
+    
+    // Fallback: use first line of text content
+    const textContent = element.textContent?.trim() || '';
+    const firstLine = textContent.split('\n')[0].trim();
+    return firstLine.length > 5 ? firstLine : '';
+  }
+
+  private extractDescriptionFromNewsItem(element: Element): string {
+    const descSelectors = ['.description', '.summary', '.content', '.body', 'p'];
+    
+    for (const selector of descSelectors) {
+      const descEl = element.querySelector(selector);
+      if (descEl?.textContent?.trim()) {
+        return descEl.textContent.trim();
+      }
+    }
+    
+    // Fallback: use text content but skip the title part
+    const fullText = element.textContent?.trim() || '';
+    const lines = fullText.split('\n').filter(line => line.trim().length > 0);
+    return lines.length > 1 ? lines.slice(1).join(' ').trim() : '';
+  }
+
+  private extractDateFromNewsItem(element: Element, text: string): string {
+    // First try to find date in specific elements
+    const dateSelectors = ['.date', '.time', 'time', '.published', '.event-date'];
+    
+    for (const selector of dateSelectors) {
+      const dateEl = element.querySelector(selector);
+      if (dateEl?.textContent?.trim()) {
+        return dateEl.textContent.trim();
+      }
+      if (dateEl?.getAttribute('datetime')) {
+        return dateEl.getAttribute('datetime') || '';
+      }
+    }
+    
+    // Fallback to text pattern matching
+    return this.extractDateFromText(text);
+  }
+
+  private isGenericTitle(title: string): boolean {
+    const genericWords = ['詳細', '情報', 'お知らせ', '案内', 'more', 'read more', '続きを読む'];
+    return genericWords.some(word => title.includes(word)) || title.length < 6;
   }
 
   private extractText(element: Element, selector: string): string {

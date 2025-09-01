@@ -55,7 +55,9 @@ const checkDateFilter = (event: EventInfo, filter: string): boolean => {
 
 export const useEventFilters = (events: EventInfo[]) => {
   const [activeCategory, setActiveCategory] = useState<string>('すべて');
-  const [activeArea, setActiveArea] = useState<string>('all');
+  // City scope from Vite env (browser)
+  const cityScope = ((import.meta as any)?.env?.VITE_CITY_SCOPE as string | undefined)?.toLowerCase?.() || '';
+  const [activeArea, setActiveArea] = useState<string>(cityScope === 'morioka' ? 'kenou' : 'all');
   const [activeDateFilter, setActiveDateFilter] = useState<string>('all');
 
   const categories = useMemo(() => {

@@ -19,6 +19,41 @@ government:
     enabled: true
     notes: "Primary government source - highest priority"
 
+  - id: morioka_event_calendar
+    name: "盛岡市イベントカレンダー"
+    url: "https://www.city.morioka.iwate.jp/event_calendar.html"
+    type: html_scraping
+    category: general
+    region: kenou
+    reliability: 0.9
+    updateFrequency: daily
+    enabled: true
+    selectors:
+      list: ".event-list li, .calendar-event, .news-item, article"
+      title: "h3, h4, .title, .event-title, a"
+      url: "a@href"
+      date: ".date, .time, time, .event-date"
+      venue: ".venue, .place, .location"
+    fetchConfig:
+      parseRules:
+        containerSelector: ".event-list li, .calendar-event, .news-item, article, .content-section"
+        titleSelector: "h3, h4, .title, .event-title, a"
+        descriptionSelector: ".description, .content, p"
+        dateSelector: ".date, .time, time, .event-date"
+        locationSelector: ".venue, .place, .location"
+    notes: "盛岡市公式イベント一覧（市公式ドメイン）"
+
+  - id: morioka_festival_event
+    name: "盛岡市 まつり・イベント"
+    url: "https://www.city.morioka.iwate.jp/kankou/kankou/1037105/index.html"
+    type: html_scraping
+    category: festivals
+    region: kenou
+    reliability: 0.9
+    updateFrequency: weekly
+    enabled: true
+    notes: "盛岡市公式 観光系イベント（市公式ドメイン）"
+
 # Community API sources (Connpass, Doorkeeper)
 community:
   - id: connpass_iwate
@@ -37,7 +72,7 @@ community:
       url: "events[].event_url"
       venue: "events[].address"
       organizer: "events[].owner_display_name"
-    keywords: ["岩手", "盛岡", "花巻", "一関", "奥州"]
+    keywords: ["盛岡"]
     
   - id: doorkeeper_iwate
     name: "Doorkeeper 岩手"
@@ -48,6 +83,7 @@ community:
     reliability: 0.9
     updateFrequency: daily
     enabled: true
+    keywords: ["盛岡"]
 
 # PRIORITY 2: Well-structured HTML sources
 tourism:
@@ -76,8 +112,19 @@ tourism:
     region: all
     reliability: 0.8
     updateFrequency: weekly
-    enabled: true
+    enabled: false
     notes: "Official tourism portal - good structured data"
+
+  - id: odette_morioka
+    name: "盛岡観光情報（イベントカレンダー）"
+    url: "https://www.odette.or.jp/?page_id=264"
+    type: html_scraping
+    category: cultural
+    region: kenou
+    reliability: 0.85
+    updateFrequency: weekly
+    enabled: true
+    notes: "盛岡観光コンベンション協会のイベント情報"
 
 # PRIORITY 3: Secondary sources (disabled by default for PoC)
 regional:

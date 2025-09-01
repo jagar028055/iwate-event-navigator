@@ -10,8 +10,11 @@ export default defineConfig(({ mode }) => {
                          env.VITE_GEMINI_API_KEY || 
                          process.env.GEMINI_API_KEY || 
                          process.env.VITE_GEMINI_API_KEY;
+
+    const cityScope = env.VITE_CITY_SCOPE || process.env.VITE_CITY_SCOPE;
     
     console.log('Build time - GEMINI_API_KEY:', geminiApiKey ? 'SET' : 'NOT SET');
+    console.log('Build time - VITE_CITY_SCOPE:', cityScope || 'NOT SET');
     console.log('Environment variables available:', Object.keys(env).filter(key => key.includes('GEMINI')));
     console.log('Process env GEMINI keys:', Object.keys(process.env).filter(key => key.includes('GEMINI')));
     
@@ -28,15 +31,18 @@ export default defineConfig(({ mode }) => {
         '__GEMINI_API_KEY__': JSON.stringify(geminiApiKey),
         'import.meta.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
         'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKey),
+        'import.meta.env.VITE_CITY_SCOPE': JSON.stringify(cityScope),
         // ブラウザ環境でのprocess.envアクセスを安全に処理
         'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
         'process.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKey),
+        'process.env.VITE_CITY_SCOPE': JSON.stringify(cityScope),
         // Node.js環境変数の存在チェックを安全に処理
         'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development'),
         // Define global for browser environment
         'global': 'globalThis',
         // Window object API key for browser access
         'window.__GEMINI_API_KEY__': JSON.stringify(geminiApiKey),
+        'window.__VITE_CITY_SCOPE__': JSON.stringify(cityScope),
         // CI flag for testing
         'window.__CI__': JSON.stringify(process.env.CI || 'false')
       },

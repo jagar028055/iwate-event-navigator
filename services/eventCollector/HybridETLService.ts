@@ -18,6 +18,7 @@ import {
 import { ICSAdapter } from './adapters/ICSAdapter';
 import { RSSAdapter } from './adapters/RSSAdapter';
 import { HTMLAdapter } from './adapters/HTMLAdapter';
+import { APIAdapter } from './adapters/APIAdapter';
 import { saveSnapshot, writeRunLog } from './utils/persistence';
 
 export class HybridETLService {
@@ -34,6 +35,7 @@ export class HybridETLService {
     this.registerAdapter(new ICSAdapter());
     this.registerAdapter(new RSSAdapter());
     this.registerAdapter(new HTMLAdapter());
+    this.registerAdapter(new APIAdapter());
   }
 
   /**
@@ -144,20 +146,26 @@ export class HybridETLService {
       const concurrency = Math.min(context.rateLimits.maxConcurrentRequests, targetSources.length);
       const batches = this.createBatches(targetSources, concurrency);
 
-      for (const batch of batches) {
-        const batchResults = await Promise.allSettled(
-          batch.map(source => this.processSingleSource(source, context))
-        );
-
-        for (let i = 0; i < batchResults.length; i++) {
-          const result = batchResults[i];
-          if (result.status === 'fulfilled') {
-            results.push(result.value);
-          } else {
-            console.error(`Source ${batch[i].id} failed:`, result.reason);
-            // Create error result
-            results.push(this.createErrorResult(batch[i], result.reason, context));
+      // Process sources sequentially to avoid infinite loops
+      for (const source of targetSources.slice(0, 3)) { // Limit to first 3 sources for testing
+        try {
+          console.log(`🔍 Processing source: ${source.name} (${source.type})`);
+          console.log(`📍 Source URL: ${source.url}`);
+          
+          const result = await this.processSingleSource(source, context);
+          console.log(`✅ Source ${source.name} completed: ${result.events.length} events found`);
+          
+          if (result.events.length === 0) {
+            console.warn(`⚠️ No events found from ${source.name}. Raw data length: ${result.rawData?.[0]?.rawContent?.length || 0}`);
           }
+          
+          results.push(result);
+          
+          // Short delay between sources
+          await this.delay(100);
+        } catch (error) {
+          console.error(`❌ Source ${source.name} failed:`, error);
+          results.push(this.createErrorResult(source, error, context));
         }
       }
 
@@ -209,11 +217,13 @@ export class HybridETLService {
         throw new Error(`Adapter cannot handle source: ${source.name}`);
       }
 
-      // Check if source needs updating based on frequency and cache
-      if (context.cacheStrategy.useCache && !this.shouldRefreshSource(source, context)) {
-        console.log(`Using cached data for source: ${source.name}`);
-        return this.createEmptyResult(source, startTime, 'Cache hit');
-      }
+      // DISABLED: Check if source needs updating based on frequency and cache
+      // Force fresh data fetch for debugging - bypassing cache
+      // if (context.cacheStrategy.useCache && !this.shouldRefreshSource(source, context)) {
+      //   console.log(`Using cached data for source: ${source.name}`);
+      //   return this.createEmptyResult(source, startTime, 'Cache hit');
+      // }
+      console.log(`🔄 Forcing fresh data fetch for: ${source.name}`);
 
       // Step 1: Fetch raw data
       const rawData = await adapter.fetch(source);
@@ -670,5 +680,12 @@ export class HybridETLService {
         : 0;
       result.statistics.geolocationSuccess = result.events.filter(e => e.latitude && e.longitude).length;
     });
+  }
+
+  /**
+   * Simple delay utility
+   */
+  private async delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }

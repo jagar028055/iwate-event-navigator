@@ -7,6 +7,8 @@ export class EventCache {
   private indexedDBName = 'IwateEventsDB';
   private indexedDBVersion = 1;
   private db: IDBDatabase | null = null;
+  private hasLocalStorage: boolean;
+  private hasIndexedDB: boolean;
   
   // Cache configuration
   private readonly memoryCacheMaxSize = 50; // MB in terms of entries
@@ -23,7 +25,18 @@ export class EventCache {
   };
 
   constructor() {
-    this.initializeIndexedDB();
+    // Safe runtime capability detection (works in Node/browser)
+    this.hasLocalStorage = typeof localStorage !== 'undefined';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const idbTypeof = typeof (globalThis as any).indexedDB;
+    this.hasIndexedDB = idbTypeof !== 'undefined';
+
+    if (this.hasIndexedDB) {
+      this.initializeIndexedDB().catch(() => {
+        // Ignore initialization errors in unsupported runtimes
+        this.db = null;
+      });
+    }
     this.setupCleanupInterval();
   }
 
@@ -80,6 +93,10 @@ export class EventCache {
 
   // Layer 2: LocalStorage Cache (Fast)
   public async getFromLocalStorage(key: string): Promise<EnhancedEventInfo[] | null> {
+    if (!this.hasLocalStorage) {
+      this.statistics.missCount++;
+      return null;
+    }
     try {
       const storageKey = this.localStoragePrefix + key;
       const cached = localStorage.getItem(storageKey);
@@ -117,6 +134,7 @@ export class EventCache {
     data: EnhancedEventInfo[], 
     ttl: number = 86400000 // 24 hours default
   ): Promise<void> {
+    if (!this.hasLocalStorage) return;
     try {
       const entry: CacheEntry<EnhancedEventInfo[]> = {
         key,
@@ -157,6 +175,7 @@ export class EventCache {
 
   // Layer 3: IndexedDB Cache (Large capacity)
   public async getFromIndexedDB(key: string): Promise<EnhancedEventInfo[] | null> {
+    if (!this.hasIndexedDB) return null;
     if (!this.db) {
       await this.initializeIndexedDB();
       if (!this.db) return null;
@@ -210,6 +229,7 @@ export class EventCache {
     data: EnhancedEventInfo[], 
     ttl: number = 604800000 // 7 days default
   ): Promise<void> {
+    if (!this.hasIndexedDB) return;
     if (!this.db) {
       await this.initializeIndexedDB();
       if (!this.db) return;
@@ -283,11 +303,11 @@ export class EventCache {
       promises.push(this.setInMemory(key, data, memoryTTL));
     }
     
-    if (!skipLocalStorage) {
+    if (!skipLocalStorage && this.hasLocalStorage) {
       promises.push(this.setInLocalStorage(key, data, localStorageTTL));
     }
     
-    if (!skipIndexedDB) {
+    if (!skipIndexedDB && this.hasIndexedDB) {
       promises.push(this.setInIndexedDB(key, data, indexedDBTTL));
     }
 
@@ -299,13 +319,15 @@ export class EventCache {
     // Remove from all cache layers
     this.memoryCache.delete(key);
     
-    try {
-      localStorage.removeItem(this.localStoragePrefix + key);
-    } catch (error) {
-      console.error('LocalStorage invalidation error:', error);
+    if (this.hasLocalStorage) {
+      try {
+        localStorage.removeItem(this.localStoragePrefix + key);
+      } catch (error) {
+        console.error('LocalStorage invalidation error:', error);
+      }
     }
 
-    if (this.db) {
+    if (this.db && this.hasIndexedDB) {
       return new Promise((resolve) => {
         const transaction = this.db!.transaction(['events'], 'readwrite');
         const store = transaction.objectStore('events');
@@ -327,17 +349,19 @@ export class EventCache {
     this.statistics.evictionCount = 0;
 
     // Clear LocalStorage cache
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(this.localStoragePrefix)) {
-        keysToRemove.push(key);
+    if (this.hasLocalStorage) {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(this.localStoragePrefix)) {
+          keysToRemove.push(key);
+        }
       }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
     }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
 
     // Clear IndexedDB cache
-    if (this.db) {
+    if (this.db && this.hasIndexedDB) {
       return new Promise((resolve) => {
         const transaction = this.db!.transaction(['events'], 'readwrite');
         const store = transaction.objectStore('events');
@@ -358,8 +382,11 @@ export class EventCache {
 
   // Private helper methods
   private async initializeIndexedDB(): Promise<void> {
+    if (!this.hasIndexedDB) return Promise.resolve();
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.indexedDBName, this.indexedDBVersion);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const idb: any = (globalThis as any).indexedDB;
+      const request = idb.open(this.indexedDBName, this.indexedDBVersion);
 
       request.onerror = () => {
         console.error('IndexedDB initialization failed:', request.error);
