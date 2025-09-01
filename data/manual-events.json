@@ -119,5 +119,60 @@
     "longitude": 141.1080,
     "category": "体験",
     "officialUrl": "https://zoomo.co.jp/event/"
+  },
+  {
+    "id": "machinaka-sansa-2025-0921",
+    "title": "街なかさんさ踊り（第3日曜）",
+    "description": "市内中心部で行われるさんさ踊りのステージ。子ども連も参加し、家族で楽しめます。",
+    "date": "2025-09-21",
+    "locationName": "プラザおでって広場 ほか",
+    "latitude": 39.7019,
+    "longitude": 141.1495,
+    "category": "子ども",
+    "officialUrl": "https://hellomorioka.jp/event-topics/12123/"
+  },
+  {
+    "id": "kodomo-kagakukan-kenkyu-2025-0913",
+    "title": "岩手県科学研究発表会（盛岡市子ども科学館）",
+    "description": "小学生の理科作品展示・研究発表（観覧可）。",
+    "date": "2025-09-13",
+    "locationName": "盛岡市子ども科学館 プラネタリウム室",
+    "latitude": 39.6830,
+    "longitude": 141.1370,
+    "category": "子ども",
+    "officialUrl": "https://kodomokagakukan.com/"
+  },
+  {
+    "id": "zoomo-night-zoo-2025-0915",
+    "title": "ホントの夜の動物園（ZOOMO）",
+    "description": "夜の動物たちの暮らしに配慮した観察プログラム。",
+    "date": "2025-09-15",
+    "locationName": "盛岡市動物公園 ZOOMO",
+    "latitude": 39.6670,
+    "longitude": 141.1080,
+    "category": "子ども",
+    "officialUrl": "https://zoomo.co.jp/event/night_zoo/"
+  },
+  {
+    "id": "zoomo-monkey-feed-2025-09",
+    "title": "ニホンザルのごはん（体験）",
+    "description": "飼育員の解説付きでサルの給餌を観察・学習（開催日程は園の案内をご確認ください）。",
+    "date": "2025-09-01 - 2025-09-30",
+    "locationName": "盛岡市動物公園 ZOOMO",
+    "latitude": 39.6670,
+    "longitude": 141.1080,
+    "category": "子ども",
+    "officialUrl": "https://iko-yo.net/facilities/4260"
+  },
+  {
+    "id": "morioka-city-library-ohanashi-2025-09",
+    "title": "盛岡市立図書館 おはなし会（9月）",
+    "description": "絵本の読み聞かせ等の子ども向け行事。詳細は行事予定をご確認ください。",
+    "date": "2025-09-01 - 2025-09-30",
+    "locationName": "盛岡市立図書館",
+    "latitude": 39.7207,
+    "longitude": 141.1469,
+    "category": "子ども",
+    "officialUrl": "https://www.city.morioka.iwate.jp/kosodate/tosho/1040089.html"
   }
 ]
