@@ -16,6 +16,8 @@
   - スキーマ検証は `npm run validate:sources` 合格
 - `hooks/useEventFilters.ts`: City Scope が `morioka` のとき `activeArea` 初期値を `kenou` に
 - `App.tsx`: ヘッダーに「盛岡市のみ表示中」バッジを表示
+- `components/MapPanel.tsx`: `VITE_CITY_SCOPE=morioka` の場合、地図中心・ズーム・`maxBounds` を盛岡市に固定
+- 手動イベントモード: `services/manualEventService.ts` と `data/manual-events.json` を追加。初期リリースは手動でも可
 - Node互換・停止回避:
   - `services/httpClient.ts`: Node検出・タイムアウト・失敗時モック・強制モックフラグ（`FORCE_MOCK_FETCH`/`VITE_FORCE_MOCK`）追加
   - `services/eventCollector/cache/EventCache.ts`: `localStorage`/`indexedDB` 非対応環境（Node）で自動スキップ
@@ -41,6 +43,13 @@
   - 実ネットワーク検証したい場合は `FORCE_MOCK_FETCH=0 npm run -s test:hybrid-etl`（環境により不安定）
 - スキーマ検証
   - `npm run validate:sources`
+
+### 手動イベントモード（初期リリース向け）
+- 即時にリリースしたい場合は以下いずれかを設定
+  - `.env.local` に `VITE_MANUAL_EVENTS_ONLY=1` を追加（推奨）
+  - もしくは `VITE_EVENTS_MODE=manual`
+- 画面の「イベント更新」で `data/manual-events.json` の内容を表示
+- 自動収集が安定したらフラグを外せば切り替わります
 
 ## チューニングの勘所（次ステップ）
 - 抽出精度: サイトごとに `sources.yaml` の `selectors`/`fetchConfig.parseRules` を追加してDOMに最適化
@@ -68,4 +77,3 @@
 
 ---
 このままブラウザでPoCを回し、必要に応じて `sources.yaml` にセレクタを追加して精度を上げてください。品質ゲート/KPIのしきい値調整は1週間の実測後に更新するのが推奨です。
-

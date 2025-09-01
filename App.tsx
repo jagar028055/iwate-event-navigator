@@ -154,7 +154,7 @@ function App() {
           <h1 className="text-2xl font-bold text-teal-700">
             岩手イベントナビゲーター
           </h1>
-          {((import.meta as any)?.env?.VITE_CITY_SCOPE === 'morioka' || true) && (
+          {((import.meta as any)?.env?.VITE_CITY_SCOPE === 'morioka') && (
             <span className="ml-4 px-3 py-1 text-sm bg-teal-100 text-teal-700 rounded-full">
               盛岡市のみ表示中 ({(import.meta as any)?.env?.VITE_CITY_SCOPE || 'undefined'})
             </span>
