@@ -1,0 +1,47 @@
+[
+  {
+    "id": "manual-sansa-2024",
+    "title": "盛岡さんさ踊り",
+    "description": "太鼓と踊りの祭典。市内中心部で開催。",
+    "date": "2024-08-01",
+    "locationName": "盛岡市中央通",
+    "latitude": 39.7036,
+    "longitude": 141.1526,
+    "category": "祭り",
+    "officialUrl": "https://www.sansaodori.jp/"
+  },
+  {
+    "id": "manual-odette-parklive",
+    "title": "もりおか公園ライブ",
+    "description": "週末の屋外ライブ（サンプル）。",
+    "date": "2024-06-22",
+    "locationName": "盛岡城跡公園(岩手公園)",
+    "latitude": 39.7024,
+    "longitude": 141.1474,
+    "category": "文化",
+    "officialUrl": "https://www.odette.or.jp/"
+  },
+  {
+    "id": "manual-municipal-exhibition",
+    "title": "盛岡市民文化展示会",
+    "description": "市民文化の展示イベント（サンプル）。",
+    "date": "2024-07-15",
+    "locationName": "盛岡市民文化ホール",
+    "latitude": 39.7012,
+    "longitude": 141.1527,
+    "category": "文化",
+    "officialUrl": "https://www.city.morioka.iwate.jp/"
+  },
+  {
+    "id": "manual-kenmin-concert",
+    "title": "岩手県民会館 サマーコンサート",
+    "description": "クラシック音楽のコンサート（サンプル）。",
+    "date": "2024-07-05",
+    "locationName": "岩手県民会館",
+    "latitude": 39.7047,
+    "longitude": 141.1520,
+    "category": "音楽",
+    "officialUrl": "https://www.iwate-kenmin.jp/events/"
+  }
+]
+

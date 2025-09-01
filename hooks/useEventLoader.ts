@@ -3,6 +3,7 @@ import { hybridETLService } from '../services/hybridETLService';
 import { fetchIwateEvents } from '../services/geminiService';
 import { enhancedEventService } from '../services/eventCollector';
 import { useAppStore } from '../store/appStore';
+import { manualEventService } from '../services/manualEventService';
 
 export const useEventLoader = () => {
   const {
@@ -21,6 +22,27 @@ export const useEventLoader = () => {
     try {
       let events = [];
       let sources = [];
+
+      // Step 0: Manual mode (initial release) if enabled
+      const getEnv = () => {
+        try { return (import.meta as any)?.env || {}; } catch { return {}; }
+      };
+      const env = getEnv();
+      const manualMode =
+        String(env?.VITE_MANUAL_EVENTS_ONLY || '') === '1' ||
+        String(env?.VITE_EVENTS_MODE || '').toLowerCase() === 'manual' ||
+        String((globalThis as any)?.process?.env?.VITE_MANUAL_EVENTS_ONLY || '') === '1' ||
+        String((globalThis as any)?.process?.env?.VITE_EVENTS_MODE || '').toLowerCase() === 'manual';
+
+      if (manualMode) {
+        console.log('📝 Manual events mode enabled. Loading from JSON...');
+        const result = await manualEventService.fetchEvents();
+        events = result.events;
+        sources = result.sources;
+        setEvents(events);
+        setSources(sources);
+        return;
+      }
 
       // Step 1: Try Hybrid ETL service FIRST (following redesign docs)
       try {
@@ -81,7 +103,19 @@ export const useEventLoader = () => {
         console.warn('❌ Original Gemini service also failed:', originalError);
       }
 
-      // Step 4: Provide sample data if all services fail
+      // Step 4: Try manual data before sample if all services fail
+      try {
+        console.log('📋 Trying manual events as final functional fallback...');
+        const result = await manualEventService.fetchEvents();
+        if (result.events.length > 0) {
+          setEvents(result.events);
+          setSources(result.sources);
+          setError('自動収集が不安定のため、手動登録データを表示しています。');
+          return;
+        }
+      } catch (_) {}
+
+      // Step 5: Provide sample data if everything fails
       console.log('🔧 Providing sample events as final fallback...');
       const sampleEvents = [
         {

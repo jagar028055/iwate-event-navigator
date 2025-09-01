@@ -16,6 +16,11 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // City scope from Vite env (browser)
+  const cityScope = ((import.meta as any)?.env?.VITE_CITY_SCOPE as string | undefined)?.toLowerCase?.() || '';
+  // Morioka bounding box (approx)
+  const moriokaBounds: [[number, number], [number, number]] = [[39.55, 140.95], [39.85, 141.35]];
+  const moriokaCenter: [number, number] = [39.7017, 141.1543];
 
   // Initialize map
   useEffect(() => {
@@ -38,23 +43,26 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
         });
         
-        // Create map
+        // Create map (scope to Morioka if requested)
+        const isMorioka = cityScope === 'morioka';
         const map = L.map(containerRef.current, {
-          center: [39.702, 141.152], // Iwate Prefecture center
-          zoom: 8,
+          center: isMorioka ? moriokaCenter : [39.702, 141.152],
+          zoom: isMorioka ? 12 : 8,
           zoomControl: true,
           scrollWheelZoom: true,
           doubleClickZoom: true,
-          touchZoom: true
+          touchZoom: true,
+          maxBounds: isMorioka ? moriokaBounds : undefined,
+          maxBoundsViscosity: isMorioka ? 1.0 : undefined
         });
         
         // Add tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors',
-          maxZoom: 18,
-          minZoom: 6
+          maxZoom: 19,
+          minZoom: isMorioka ? 10 : 6
         }).addTo(map);
-        
+
         if (mounted) {
           mapRef.current = map;
           leafletRef.current = L;
@@ -62,7 +70,7 @@ export const MapPanel: React.FC<MapPanelProps> = ({ events, onSelectEvent, selec
           setIsLoading(false);
           console.log('✅ Map initialized successfully');
         }
-        
+
       } catch (error) {
         console.error('❌ Map initialization failed:', error);
         if (mounted) {

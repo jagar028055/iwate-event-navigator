@@ -85,7 +85,8 @@ export const useEventFilters = (events: EventInfo[]) => {
 
   const resetFilters = () => {
     setActiveCategory('すべて');
-    setActiveArea('all');
+    // Respect city scope (keep kenou for morioka)
+    setActiveArea(cityScope === 'morioka' ? 'kenou' : 'all');
     setActiveDateFilter('all');
   };
 
