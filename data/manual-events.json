@@ -1,47 +1,123 @@
 [
   {
-    "id": "manual-sansa-2024",
-    "title": "盛岡さんさ踊り",
-    "description": "太鼓と踊りの祭典。市内中心部で開催。",
-    "date": "2024-08-01",
-    "locationName": "盛岡市中央通",
+    "id": "ishigaki-music-fes-2025",
+    "title": "いしがき MUSIC FESTIVAL 2025",
+    "description": "盛岡市内各所にステージが設置される街なか音楽フェス（主会場：盛岡城跡公園）。",
+    "date": "2025-09-28",
+    "locationName": "盛岡城跡公園(岩手公園)",
+    "latitude": 39.7015,
+    "longitude": 141.1528,
+    "category": "音楽",
+    "officialUrl": "https://ishigaki-fes.jp/"
+  },
+  {
+    "id": "morioka-aki-matsuri-2025-dashi",
+    "title": "盛岡秋まつり（山車行事）",
+    "description": "豪華絢爛な山車が市内を巡行する盛岡の秋の風物詩。",
+    "date": "2025-09-14 - 2025-09-16",
+    "locationName": "盛岡八幡宮・市内巡行",
+    "latitude": 39.6996,
+    "longitude": 141.1560,
+    "category": "祭り",
+    "officialUrl": "https://www.odette.or.jp/?p=829"
+  },
+  {
+    "id": "morioka-hachimangu-reitaisai-2025",
+    "title": "盛岡八幡宮 例大祭（宵宮祭〜本祭）",
+    "description": "盛岡八幡宮の年に一度の大祭。期間中に神事や奉納行事が行われます。",
+    "date": "2025-09-12 - 2025-09-16",
+    "locationName": "盛岡八幡宮",
+    "latitude": 39.6996,
+    "longitude": 141.1560,
+    "category": "祭り",
+    "officialUrl": "https://iwatetabi.jp/events/9154/"
+  },
+  {
+    "id": "morioka-yabusame-2025",
+    "title": "盛岡八幡宮 神事流鏑馬",
+    "description": "盛岡八幡宮境内馬場で行われる伝統神事の流鏑馬。",
+    "date": "2025-09-16",
+    "locationName": "盛岡八幡宮 境内馬場",
+    "latitude": 39.6996,
+    "longitude": 141.1560,
+    "category": "伝統行事",
+    "officialUrl": "https://iwatetabi.jp/events/9154/"
+  },
+  {
+    "id": "odette-yataimura-2025",
+    "title": "おでって屋台村（盛岡秋まつり連動）",
+    "description": "おでって広場に地元グルメが集まる屋台村。",
+    "date": "2025-09-13 - 2025-09-16",
+    "locationName": "プラザおでって広場",
+    "latitude": 39.7019,
+    "longitude": 141.1495,
+    "category": "フード",
+    "officialUrl": "https://www.odette.or.jp/plaza-odette/?page_id=644"
+  },
+  {
+    "id": "zaimokucho-yoichi-2025-0906",
+    "title": "材木町よ市（9/6）",
+    "description": "4月〜11月の毎週土曜に開催される路上市（9/6開催分）。",
+    "date": "2025-09-06",
+    "locationName": "材木町商店街",
+    "latitude": 39.7020,
+    "longitude": 141.1300,
+    "category": "マルシェ",
+    "officialUrl": "https://www.zaimokucho-yoichi.com/"
+  },
+  {
+    "id": "zaimokucho-yoichi-coffee-2025-0920",
+    "title": "材木町よ市 コーヒーマルシェ（9/20）",
+    "description": "よ市特別企画。盛岡・矢巾の珈琲店が集うコーヒーマルシェ。",
+    "date": "2025-09-20",
+    "locationName": "材木町商店街",
+    "latitude": 39.7020,
+    "longitude": 141.1300,
+    "category": "マルシェ",
+    "officialUrl": "https://www.hotel-ace.co.jp/盛岡材木町-よ市-ふれあい楽しい路上買物市/"
+  },
+  {
+    "id": "morireki-kinzan-2025",
+    "title": "企画展『金山を開発せよ』",
+    "description": "「大槌金沢金山之図」制作に迫る企画展。",
+    "date": "2025-08-09 - 2025-10-26",
+    "locationName": "もりおか歴史文化館（1F企画展示室）",
+    "latitude": 39.7010,
+    "longitude": 141.1492,
+    "category": "展覧会",
+    "officialUrl": "https://www.morireki.jp/"
+  },
+  {
+    "id": "morireki-nitobe-2025",
+    "title": "特集展示『稲造以前のこと − 盛岡藩士・新渡戸一族 −』",
+    "description": "盛岡藩士・新渡戸一族に焦点を当てた特集展示。",
+    "date": "2025-07-18 - 2025-11-17",
+    "locationName": "もりおか歴史文化館",
+    "latitude": 39.7010,
+    "longitude": 141.1492,
+    "category": "展覧会",
+    "officialUrl": "https://www.morireki.jp/"
+  },
+  {
+    "id": "morioka-city-marathon-2025",
+    "title": "いわて盛岡シティマラソン2025",
+    "description": "盛岡の街を駆け抜けるフルマラソン。",
+    "date": "2025-10-19",
+    "locationName": "盛岡市内コース（スタート/フィニッシュ：市内）",
     "latitude": 39.7036,
     "longitude": 141.1526,
-    "category": "祭り",
-    "officialUrl": "https://www.sansaodori.jp/"
+    "category": "スポーツ",
+    "officialUrl": "https://iwate-morioka-city-marathon.jp/"
   },
   {
-    "id": "manual-odette-parklive",
-    "title": "もりおか公園ライブ",
-    "description": "週末の屋外ライブ（サンプル）。",
-    "date": "2024-06-22",
-    "locationName": "盛岡城跡公園(岩手公園)",
-    "latitude": 39.7024,
-    "longitude": 141.1474,
-    "category": "文化",
-    "officialUrl": "https://www.odette.or.jp/"
-  },
-  {
-    "id": "manual-municipal-exhibition",
-    "title": "盛岡市民文化展示会",
-    "description": "市民文化の展示イベント（サンプル）。",
-    "date": "2024-07-15",
-    "locationName": "盛岡市民文化ホール",
-    "latitude": 39.7012,
-    "longitude": 141.1527,
-    "category": "文化",
-    "officialUrl": "https://www.city.morioka.iwate.jp/"
-  },
-  {
-    "id": "manual-kenmin-concert",
-    "title": "岩手県民会館 サマーコンサート",
-    "description": "クラシック音楽のコンサート（サンプル）。",
-    "date": "2024-07-05",
-    "locationName": "岩手県民会館",
-    "latitude": 39.7047,
-    "longitude": 141.1520,
-    "category": "音楽",
-    "officialUrl": "https://www.iwate-kenmin.jp/events/"
+    "id": "zoomo-backyard-tour-2025-0915",
+    "title": "ZOOMO バックヤードツアー（寄付型プログラム）",
+    "description": "普段非公開の施設をスタッフ解説で巡る寄付型ツアー。",
+    "date": "2025-09-15",
+    "locationName": "盛岡市動物公園 ZOOMO",
+    "latitude": 39.6670,
+    "longitude": 141.1080,
+    "category": "体験",
+    "officialUrl": "https://zoomo.co.jp/event/"
   }
 ]
-
