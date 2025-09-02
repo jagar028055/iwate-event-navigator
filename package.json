@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:morioka:manual": "VITE_CITY_SCOPE=morioka VITE_MANUAL_EVENTS_ONLY=1 vite",
     "build": "vite build",
     "preview": "vite preview",
     "test": "playwright test",
